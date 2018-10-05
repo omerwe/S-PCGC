@@ -155,7 +155,7 @@ A: No.
 Q: Does S-PCGC recognize categorical covariates?<br>
 A: No (though we might add this in the future). Please transform all your categorical covariates into a series of binary dummy variables.
 
-Q: Can pcgc_sumstats_createor use Bgen files instead of plink files?<br>
+Q: Can pcgc_sumstats_createor use bgen files instead of plink files?<br>
 A: Currently no.
 
 Q: Can my data include two studies with overlapping individuals?<br>
