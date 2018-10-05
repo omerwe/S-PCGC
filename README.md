@@ -187,7 +187,7 @@ wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_
 
 <br><br>
 ## Regressing genotypes on principal components
-It is common to include principal components (PCs) as covariates in the analysis to prevent possible confounding due to population structure. We recommend computing PCs via external software (e.g. [FlashPCA2](https://github.com/gabraham/flashpca)) and including them as additional covariates before computing summary statistics.
+It is common to include principal components (PCs) as covariates to prevent possible confounding due to population structure. We recommend computing PCs via external software (e.g. [FlashPCA2](https://github.com/gabraham/flashpca)) and including them as additional covariates before computing summary statistics.
 
 A complexity of case-control studies is that the PCs cannot be regressed from the phenotypes. We therefore recommend to regress PCs from the genotypes. You can do this in `pcgc_sumstast_creator.py` via the following two flags:
 1. `--covars-regress <covariate names>`. This is a comma-separated list of names of covariates that will be regressed out of the genotypes (i.e., PCs).
