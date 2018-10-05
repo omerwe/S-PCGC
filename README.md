@@ -44,7 +44,7 @@ S-PCGC fully supports S-LDSC input and output formats, which enables it to inter
 For example, you can input S-PCGC results into [the S-LDSC scripts for partitioned heritability from continuous annotations](https://github.com/bulik/ldsc/wiki/Partitioned-Heritability-from-Continuous-Annotations). 
 
 <br><br>
-## TL;DR (a simple example)
+# A simple example
 The following is a simple end-to-end S-PCGC analysis, which can run in ~2 minutes. We will estimate heritability, genetic correlation and enrichment for four simulated functional annotations in two simulated case-control studies with 250 shared controls and a disease population prevalence of 1%, using only SNPs in chromosome 1. To estimate the cross-product of r^2 values, we will  use a (simulated) reference panel. All the input files are found in the directory `example`. To begin, please cd into the S-PCGC directory, and type the following commands (using the anaconda version of python if available):
 ```
 mkdir temp_results
@@ -110,6 +110,67 @@ cat temp_results/results.s2.results
 5. In this example we ran `pcgc_r2.py` on the entire genome. In real data analysis it may be easier to run `pcgc_r2.py` on each chromosome separately, and then use the flag `--prodr2-chr` when calling `pcgc_main.py`
 6. You can compute genome-wide summary statistics for all chromosomes instead of just chromosome 1, by replacing the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr`, and remove the `.1` suffix from all the input and output files. If you do this, you will find that the results haven't changed much. This is because S-PCGC follows the S-LDSC definition of heritability: S-PCGC uses the summary statistics to estimate annotation effects, but it computes heritability and rg across all common SNPs found in the reference panel --- not just ones with summary statistics (see further details below).
 7. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
+
+
+# An example with real annotations
+The following example will use real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. To run this example, you need a directory called `1000G` with plink files for the 1000 genomes reference panel (see download instructions below). You can create a symbolic link to this direcrory with the command `ln -s <path_to_1000G> 1000G`. Alternatively, you can skip the stages that require 1000G data by simply downloading the r^2 product files (see instructions in the script itself).
+```
+#download and uncompress the Baseline-LD (v2) annotations
+wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.0_ldscores.tgz
+tar -xzvf 1000G_Phase3_baselineLD_v2.0_ldscores.tgz
+
+#run pcgc_sync.py to collect annotations details
+python pcgc_sync.py --annot-chr baselineLD_v2.0/baselineLD. --out baselineLD_v2.0/baselineLD
+
+#run pcgc_r2.py on each chromosome file (WARNING: this step may take a few days if it's not parallelized)
+for i in {1..22};
+do
+    python pcgc_r2.py \
+    --annot baselineLD_v2.0/baselineLD.${i}. \
+    --sync baselineLD_v2.0/baselineLD. \
+    --bfile 1000G/1000G.EUR.QC.${i} \
+    --out baselineLD_v2.0/baselineLD.${i} 
+done
+
+#alternatively: download the .prodr2 files
+wget ....................
+
+
+#Compute 1000G MAFs
+for i in {1..22};
+do
+    ~/plink/plink \
+    --bfile 1000G/1000G.EUR.QC.${i} \
+    --freq \
+    --out 1000G/1000G.EUR.QC.${i}
+done
+
+#Create summary statistics
+mkdir s1_sumstats
+for i in {1..22};
+do
+    python pcgc_sumstats_creator.py \
+    --bfile example/s1_chr${i} \
+    --pheno example/s1.phe \
+    --covar example/s1.cov \
+    --annot baselineLD_v2.0/baselineLD.${i}. \
+    --sync baselineLD_v2.0/baselineLD. \
+    --prev 0.01 \
+    --frqfile 1000G/1000G.EUR.QC.${i}. \
+    --out s1_sumstats/s1_chr${i}
+done
+
+#estimate heritability and functional enrichment
+python pcgc_main.py \
+--annot-chr baselineLD_v2.0/baselineLD. \
+--sync baselineLD_v2.0/baselineLD. \
+--frqfile-chr 1000G/1000G.EUR.QC. \
+--sumstats-chr s1_sumstats/s1_chr \
+--prodr2-chr baselineLD_v2.0/baselineLD. \
+--out s1_sumstats/pcgc
+```
+
+
 
 <br><br>
 # Additional information
