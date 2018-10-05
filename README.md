@@ -59,7 +59,7 @@ python pcgc_r2.py \
 --sync temp_results/model. \
 --out temp_results/prodr2
 
-#Compute summary statistics for study 1
+#Compute summary statistics for study 1, using only chromosome 1
 python pcgc_sumstats_creator.py \
 --bfile example/s1 \
 --pheno example/s1.phe \
@@ -70,7 +70,7 @@ python pcgc_sumstats_creator.py \
 --prev 0.01 \
 --out temp_results/s1
 
-#Compute summary statistics for study 2
+#Compute summary statistics for study 2, using only chromosome 1
 python pcgc_sumstats_creator.py \
 --bfile example/s2 \
 --pheno example/s2.phe \
