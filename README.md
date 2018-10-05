@@ -112,7 +112,7 @@ cat temp_results/results.s2.results
 5. We can also replace the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr` only in the last command (`pcgc_main.py`). This will cause S-PCGC to use *only* chromosome 1 SNPs to estimate annotation effects, but to report heritability and enrichment using all the common SNPs found in the reference panel.
 6. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
 
-
+<br><br>
 # Additional information
 
 <br><br>
