@@ -109,8 +109,7 @@ cat temp_results/results.s2.results
 3. The `.output` results show both marginal and conditional heritability (please see details below).
 4. The flag ```--sumstats``` can accept any number of comma-separated files.
 4. If we wanted to run a whole-genome analysis instead of just chromosome 1, we just need to replace the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr`, and remove the `.1` suffix from all the input and output files (check it out!)
-5. We can also replace the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr` only in the last command (`pcgc_main.py`). This will cause S-PCGC to use *only* chromosome 1 SNPs to estimate annotation effects, but to report heritability and enrichment using all the common SNPs found in the reference panel.
-6. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
+5. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
 
 <br><br>
 # Additional information
