@@ -57,7 +57,7 @@ python pcgc_r2.py \
 --bfile example/ref_panel \
 --annot-chr example/model. \
 --sync temp_results/model. \
---out temp_results/prodr2.1
+--out temp_results/prodr2
 
 #Compute summary statistics for study 1
 python pcgc_sumstats_creator.py \
@@ -87,7 +87,7 @@ python pcgc_main.py \
 --sync temp_results/model. \
 --frqfile-chr example/model. \
 --sumstats temp_results/s1.,temp_results/s2. \
---prodr2 temp_results/prodr2.1. \
+--prodr2 temp_results/prodr2. \
 --out temp_results/results
 
 #view heritability estimates for the two studies
