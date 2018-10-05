@@ -113,7 +113,7 @@ cat temp_results/results.s2.results
 
 
 # An example with real annotations
-The following example will use real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. To run this example, you need a directory called `1000G` with plink files for the 1000 genomes reference panel (see download instructions below). You can create a symbolic link to this direcrory with the command `ln -s <path_to_1000G> 1000G`. Alternatively, you can skip the stages that require 1000G data by simply downloading the r^2 product files (see instructions in the script itself).
+The following example uses real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. To run this example, you need a directory called `1000G` with plink files for the 1000 genomes reference panel (see download instructions below). You can create a symbolic link to this direcrory with the command `ln -s <path_to_1000G> 1000G`. Alternatively, you can skip the stages that require 1000G data by simply downloading the r^2 product files (see instructions in the script itself).
 ```
 #download and uncompress the Baseline-LD (v2) annotations
 wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.0_ldscores.tgz
