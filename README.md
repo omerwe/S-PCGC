@@ -91,15 +91,15 @@ python pcgc_main.py \
 --out temp_results/results
 
 #view heritability estimates for the two studies
-cat temp_results/results.s1.output
-cat temp_results/results.s2.output
+cat temp_results/results.s1.output | column -t
+cat temp_results/results.s2.output | column -t
 
 #view a table of genetic correlation estimates between the studies
 cat temp_results/results.rg
 
 #view the functional enrichment estimates of the two studies
-cat temp_results/results.s1.results
-cat temp_results/results.s2.results
+cat temp_results/results.s1.results | column -t
+cat temp_results/results.s2.results | column -t
 ```
 
 #### Some quick comments about this example:
