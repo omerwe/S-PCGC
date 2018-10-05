@@ -25,7 +25,7 @@ We recommend running S-PCGC via the [Anaconda Python distribution](https://www.a
 
 Once all the prerequisite packages are installed, you can install S-PCGC on a git-enabled machine by typing:
 ```
-git clone https://github.com/omerwe/PCGCs
+git clone https://github.com/omerwe/S-PCGC
 ```
 
 Alternatively, you can download S-PCGC as a zip file from the Github website.
