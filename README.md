@@ -55,7 +55,7 @@ python pcgc_sync.py --annot-chr example/model. --out temp_results/model
 #Compute cross-r^2 between functional annotations
 python pcgc_r2.py \
 --bfile example/ref_panel \
---annot example/model.1. \
+--annot-chr example/model. \
 --sync temp_results/model. \
 --out temp_results/prodr2.1
 
