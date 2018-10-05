@@ -83,7 +83,7 @@ python pcgc_r2.py \
 --out temp_results/prodr2.1
 
 #Run S-PCGC to estimate h^2, rg and functional enrichment
-python pcgc2.py \
+python pcgc_main.py \
 --annot example/model.1. \
 --sync temp_results/model. \
 --frqfile example/model.1. \
