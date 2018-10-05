@@ -83,9 +83,9 @@ python pcgc_sumstats_creator.py \
 
 #Run S-PCGC to estimate h^2, rg and functional enrichment
 python pcgc_main.py \
---annot example/model.1. \
+--annot-chr example/model. \
 --sync temp_results/model. \
---frqfile example/model.1. \
+--frqfile-chr example/model. \
 --sumstats temp_results/s1.,temp_results/s2. \
 --prodr2 temp_results/prodr2.1. \
 --out temp_results/results
