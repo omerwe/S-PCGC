@@ -1,0 +1,9 @@
+[INFO]  Reading plink file from disk (this may take a while...)
+[INFO]  71 SNPs remained after removing SNPs without MAFs
+[WARNING]  The minor allele of 1 SNPs in the MAF file is different from the one in the plink file
+[INFO]  2000 individuals remained after all filtering stages
+[INFO]  71 SNPs remained after all filtering stages
+[INFO]  reading annot file...
+[INFO]  Setting chunk size to 25000 to keep at most 50000000 SNPs in memory at once
+[INFO]  Starting summary statistics computation...
+[INFO]  Writing output files...

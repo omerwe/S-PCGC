@@ -1,0 +1,5 @@
+Category	Prop._SNPs	Prop._h2	Prop._h2_std_error	Enrichment	Enrichment_std_error	Enrichment_p	Coefficient	Coefficient_std_error	Coefficient_z-score
+anno_1	1.000e+00	1.000e+00	1.463e-09	1.000e+00	1.463e-09	NA	1.040e-04	1.761e-05	5.905e+00
+anno_2	5.003e-01	5.620e-01	3.240e-02	1.123e+00	6.475e-02	0.0634259321199121	4.091e-05	2.243e-05	1.824e+00
+anno_3	2.507e-01	2.777e-01	3.250e-02	1.108e+00	1.297e-01	0.40420816059396847	2.190e-05	2.914e-05	7.513e-01
+anno_4	2.450e-01	4.218e-01	3.763e-02	1.721e+00	1.536e-01	3.7502394034576138e-06	1.613e-04	3.404e-05	4.738e+00
