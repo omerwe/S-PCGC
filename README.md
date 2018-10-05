@@ -107,8 +107,8 @@ cat temp_results/results.s2.results
 2. The `.results` files have the exact same format as S-LDSC output files.
 3. The `.output` results show both marginal and conditional heritability (please see details below).
 4. The flag ```--sumstats``` can accept any number of comma-separated files.
-4. If we wanted to run a whole-genome analysis instead of just chromosome 1, we just need to replace the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr`, and remove the `.1` suffix from all the input and output files (check it out!)
-5. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
+5. You can compute genome-wide summary statistics for all chromosomes instead of just chromosome 1, by replacing the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr`, and remove the `.1` suffix from all the input and output files. If you do this, you will find that the results haven't changed much. This is because S-PCGC follows the S-LDSC definition of heritability: S-PCGC uses the summary statistics to estimate annotation effects, but it computes heritability and rg across all common SNPs found in the reference panel --- not just ones with summary statistics (see further details below).
+6. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
 
 <br><br>
 # Additional information
