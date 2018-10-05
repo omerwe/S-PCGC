@@ -90,11 +90,25 @@ python pcgc_main.py \
 --sumstats temp_results/s1.,temp_results/s2. \
 --prodr2 temp_results/prodr2.1. \
 --out temp_results/results
-```
-Simple, right? You can now check all the output files in the directory temp_results/. There should be a file called `results.rg` file with genetic correlation between the studies (s1 and s2), two files called `results.s1.output`, `results.s2.output` showing overall heritability estimates, and two files called `s1.results`, `s2.results` showing functional enrichment estimates. The `.results` files have the exact same format as in S-LDSC. Note that the flag ```--sumstats``` can accept any number of comma-separated files --- we used two.
-Also note that this analysis used only chromosome 1. We can run pcgc2.py with multiple chromosome files by replacing ```--annot``` and ```--frqfile``` with ```--annot-chr``` and ```--frqfile-chr```, just like S-LDSC. 
 
-S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
+#view heritability results for the two studies
+cat temp_results/results.s1.output
+cat temp_results/results.s2.output
+
+#view the genetic correlation between the two studies
+cat temp_results/results.rg
+
+#view the functional enrichment of the two studies
+cat temp_results/results.s1.results
+cat temp_results/results.s2.results
+```
+
+#### Some quick comments about this example:
+1. Many of the flags are analogous to S-LDSC flags and have similar names.
+2. The `.results` files have the exact same format as S-LDSC output files.
+3. If we wanted to run a whole-genome analysis instead of just chromosome 1, we just need to replace the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr`, and remove the `.1` suffix from all the input and output files (check it out!)
+4. The flag ```--sumstats``` can accept any number of comma-separated files.
+5. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
 
 
 <br><br>
