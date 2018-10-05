@@ -139,7 +139,7 @@ A complexity of case-control studies is that the PCs cannot be regressed from th
 
 3. The code assumes that the first annotation is always a base annotation that simply assigns 1.0 to all SNPs. Please adhere to this convention!
 
-4. The .output files report two numbers: marginal and conditional heritability. Most studies report conditional heritability, but we believe that the marginal heritability is more informative. For details, please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952).
+4. The .output files report two numbers: marginal and conditional heritability. The difference is that conditional heritability conditions on the covariates in the study, meaning that it ignores the variance introduced by the covariates. Most studies report conditional heritability, but we believe that the marginal heritability is more informative. For details, please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952).
 
 5. We highly recommend that you provide external estimates of SNP frequencies to pcgc_sumstats_creator.py via the flag `--frqfile`, based on a reference panel. This can prevent bias arising due to the fact that cases are over-enriched in case-control studies, which could bias the MAF estimates and the heritability estimates.
 
