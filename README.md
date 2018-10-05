@@ -82,7 +82,7 @@ python pcgc_r2.py \
 --sumstats temp_results/s1.sumstats.gz \
 --out temp_results/prodr2.1
 
-#Run PCGC to estimate h^2, rg and functional enrichment
+#Run S-PCGC to estimate h^2, rg and functional enrichment
 python pcgc2.py \
 --annot example/model.1. \
 --sync temp_results/model. \
