@@ -95,7 +95,7 @@ python pcgc_main.py \
 cat temp_results/results.s1.output
 cat temp_results/results.s2.output
 
-#view the genetic correlation between the two studies
+#view a table of genetic correlation between the studies
 cat temp_results/results.rg
 
 #view the functional enrichment of the two studies
@@ -106,9 +106,10 @@ cat temp_results/results.s2.results
 #### Some quick comments about this example:
 1. Many of the flags are analogous to S-LDSC flags and have similar names.
 2. The `.results` files have the exact same format as S-LDSC output files.
-3. If we wanted to run a whole-genome analysis instead of just chromosome 1, we just need to replace the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr`, and remove the `.1` suffix from all the input and output files (check it out!)
-4. The flag ```--sumstats``` can accept any number of comma-separated files.
-5. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
+3. The `.output` results show both marginal and conditional heritability (please see details below).
+4. If we wanted to run a whole-genome analysis instead of just chromosome 1, we just need to replace the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr`, and remove the `.1` suffix from all the input and output files (check it out!)
+5. The flag ```--sumstats``` can accept any number of comma-separated files.
+6. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
 
 
 <br><br>
