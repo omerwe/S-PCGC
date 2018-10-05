@@ -1,7 +1,7 @@
 # S-PCGC
 Heritability, genetic correlation and functional enrichment estimation for case-control studies
 
-S-PCGC is an adaptation of stratified LD score regression [(S-LDSC)](https://www.nature.com/articles/ng.3404) for case-control studies. Similar to S-LDSC, S-PCGC can estimate genetic heritability, genetic correlation and functional enrichment. However, S-PCGC is explicitly designed for case-control studies rather than quantitative phenotypes. This can make a large differnce, especially in the presence of strong non-genetic risk factors. Parts of the S-PCGC code are adapted from S-LDSC with permission.
+S-PCGC is an adaptation of stratified LD score regression [(S-LDSC)](https://www.nature.com/articles/ng.3404) for case-control studies. Like S-LDSC, S-PCGC can estimate genetic heritability, genetic correlation and functional enrichment. However, S-PCGC is explicitly designed for case-control studies rather than quantitative phenotypes. This can make a large differnce, especially in the presence of strong non-genetic risk factors. Parts of the S-PCGC code are adapted from S-LDSC with permission.
 
 The main features of S-PCGC are:
 1. **S-PCGC is designed for case-control studies**. Such studies include many subtleties not accounted for by methods designed for quantitative phenotypes like S-LDSC.
@@ -113,7 +113,7 @@ cat temp_results/results.s2.results
 
 
 # An example with real annotations
-The following example uses real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. To run this example, you need a directory called `1000G` with plink files for the 1000 genomes reference panel (see download instructions below). You can create a symbolic link to this direcrory with the command `ln -s <path_to_1000G> 1000G`. Alternatively, you can skip the stages that require 1000G data by simply downloading the r^2 product files (see instructions in the script itself).
+The following example uses real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. To run this example, you need a directory called `1000G` that contains plink files of European individuals from the 1000 genomes reference panel (one file per chromosome; see download instructions below). You can create a symbolic link to this directory from your working directory with the command `ln -s <path_to_1000G> 1000G`. Alternatively, you can skip the stage that require 1000G data by simply downloading the r^2 product files (see instructions in the example code itself).
 ```
 #download and uncompress the Baseline-LD (v2) annotations
 wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.0_ldscores.tgz
