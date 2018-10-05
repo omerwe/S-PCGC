@@ -140,6 +140,9 @@ A: Yes! Please read the section called "Creating an annot file" in the [S-LDSC w
 Q: Can I run just a basic analysis without functional annotations?<br>
 A: Sure! Just omit the --annot and --annot-chr flags, and S-LDSC will perform a simple analysis.
 
+Q: Is it safe to make the summary statistics files publicly available?<br>
+A: Absolutely! These summary statistics don't expose any individual-level data. You may see that some of the output files include individual ids, but this is only intended to help identify overlapping individuals. The only information included about these individuals is (a) the noise in the estimation of their kinship with themselves (which should be 1.0 in expectation), and (b) the noise multiplied by their phenotype value. These fields are required to obtain accurate heritability/rg estimates (please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952) for details)
+
 Q: Should I include imputed SNPs in the summary statistics?<br>
 A: Not really. S-PCGC first estimates annotation effects via a subset of SNPs, and then estimates heritability and enrichment for all common SNPs that appear in the reference panel. The subset of SNPs corresponds to the set of "regression SNPs" of S-LDSC. We recommend using a set of high-quality common SNPs, such as HapMap3 SNPs. We also recommend excluding SNPs within the MHC (chromosome 6 28M-32M) from all analyses, as done by S-LDSC and other software tools.
 
