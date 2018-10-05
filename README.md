@@ -113,9 +113,10 @@ cat temp_results/results.s2.results
 6. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
 
 
+# Additional information
 
 <br><br>
-# Obtaining reference panel and annotation files
+## Obtaining reference panel and annotation files
 
 S-PCGC is fully compatible with the S-LDSC input format. It requires two pieces of information also used by S-LDSC:
 1. Functional annotation files. We recommend using the Baseline-LD 2.0 model [(Gazal et al. 2017)](https://www.nature.com/articles/ng.3954). You can download it by typing:
@@ -124,7 +125,7 @@ wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_
 ```
 2. A reference panel (required to compute cross-product of r^2 values). We recommend using 1000 genomes data from a relevant population. For example, you can download 1000G data from [the 1000 Genomes FTP site](https://bit.ly/2OyfNaL) and then convert it to plink format using the [`plink --vcf`](https://www.cog-genomics.org/plink2/input#vcf) command.
 
-<br><br>
+<br>
 ## Regressing genotypes on principal components
 It is common to include principal components (PCs) as covariates in the analysis to prevent possible confounding due to population structure. We recommend computing PCs via external software (e.g. [FlashPCA2](https://github.com/gabraham/flashpca)) and including them as additional covariates before computing summary statistics.
 
