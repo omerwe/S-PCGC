@@ -33,7 +33,7 @@ After downloading, we recommend checking that everything is ok by typing ```pyth
 
 
 <br><br>
-# Usage Overview
+# Usage overview
 S-PCGC carries performs a case-control analysis in four stages:
 1. **Generate a sync file for your annotations**. This is a very simple offline step that only needs to be run once. It only gathers some information about the annotations (e.g., the minimum value of each annotation across all SNPs).
 2. **Generate summary statistics**. These are specialized summary statistics explicitly designed for S-PCGC (unlike standard summary statistics analyzed by S-LDSC).
@@ -44,7 +44,7 @@ S-PCGC fully supports S-LDSC input and output formats, which enables it to inter
 For example, you can input S-PCGC results into [the S-LDSC scripts for partitioned heritability from continuous annotations](https://github.com/bulik/ldsc/wiki/Partitioned-Heritability-from-Continuous-Annotations). 
 
 <br><br>
-## TL;DR (A Simple Example)
+## TL;DR (a simple example)
 The following is a simple end-to-end S-PCGC analysis, which can run in ~2 minutes. We will estimate heritability, genetic correlation and functional enrichment for two simulated case-control studies with 250 shared controls and a disease population prevalence of 1%, using only SNPs in chromosome 1. To estimate the cross-product of r^2 values, we will  use a (simulated) reference panel. All the input files are found in the directory `example`. To begin, please cd into the S-PCGC directory, and type the following commands (using the anaconda version of python if available):
 ```
 mkdir temp_results
@@ -115,7 +115,7 @@ cat temp_results/results.s2.results
 
 
 <br><br>
-# Obtaining Reference Panel and Annotation files
+# Obtaining reference panel and annotation files
 
 S-PCGC is fully compatible with the S-LDSC input format. It requires two pieces of information also used by S-LDSC:
 1. Functional annotation files. We recommend using the Baseline-LD 2.0 model [(Gazal et al. 2017)](https://www.nature.com/articles/ng.3954). You can download it by typing:
@@ -125,7 +125,7 @@ wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_
 2. A reference panel (required to compute cross-product of r^2 values). We recommend using 1000 genomes data from a relevant population. For example, you can download 1000G data from [the 1000 Genomes FTP site](https://bit.ly/2OyfNaL) and then convert it to plink format using the [`plink --vcf`](https://www.cog-genomics.org/plink2/input#vcf) command.
 
 <br><br>
-## Regression of Genotypes on Principal Components
+## Regressing genotypes on principal components
 It is common to include principal components (PCs) as covariates in the analysis to prevent possible confounding due to population structure. We recommend computing PCs via external software (e.g. [FlashPCA2](https://github.com/gabraham/flashpca)) and including them as additional covariates before computing summary statistics.
 
 A complexity of case-control studies is that the PCs cannot be regressed from the phenotypes. We therefore recommend to regress PCs from the genotypes. You can do this in `pcgc_sumstast_creator.py` via the following two flags:
