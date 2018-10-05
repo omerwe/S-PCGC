@@ -41,7 +41,7 @@ S-PCGC carries performs a case-control analysis in four stages:
 4. **Estimate functional enrichment**. This is what we came here for.
 
 S-PCGC fully supports S-LDSC input and output formats, which enables it to interact with the S-LDSC ecosystem. We therefore recommend that you [familiarize yourself with S-LDSC](https://github.com/bulik/ldsc/wiki) before running S-PCGC.
-For example, you can run the S-LDSC scripts for [partitioned heritability from continuous annotations](https://github.com/bulik/ldsc/wiki/Partitioned-Heritability-from-Continuous-Annotations) on S-PCGC output. 
+For example, you can input S-PCGC results into [the S-LDSC scripts for partitioned heritability from continuous annotations](https://github.com/bulik/ldsc/wiki/Partitioned-Heritability-from-Continuous-Annotations). 
 
 
 ## TL;DR (A Simple Example)
