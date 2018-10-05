@@ -49,7 +49,7 @@ The following is a simple end-to-end S-PCGC analysis. We will estimate heritabil
 ```
 mkdir temp_results
 
-#create a sync file (one-time offline operation)
+#create a sync file (a one-time offline operation)
 python pcgc_sync.py --annot-chr example/model. --out temp_results/model
 
 #Compute summary statistics for study 1
