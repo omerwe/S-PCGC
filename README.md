@@ -36,8 +36,8 @@ After downloading, we recommend checking that everything is ok by typing ```pyth
 # Usage overview
 S-PCGC carries performs a case-control analysis in four stages:
 1. **Generate a sync file for your annotations**. This is a very simple offline step that only needs to be run once. It only gathers some information about the annotations (e.g., the minimum value of each annotation across all SNPs).
-2. **Generate summary statistics**. These are specialized summary statistics explicitly designed for S-PCGC (unlike standard summary statistics analyzed by S-LDSC).
-3. **Estimate the cross-product of r^2 values across all pairs of functional annotations, via a reference panel such as 1000 genomes**. This step is similar to LD-score computation. Note that this step requires a summary statistics file *only* to identify which SNPs have summary statistics --- the actual summary statistics are not used.
+2. **Estimate the cross-product of r^2 values across all pairs of functional annotations, via a reference panel such as 1000 genomes**. This step is similar to LD-score computation, and needs to be done only once and offline.
+3. **Generate summary statistics**. These are specialized summary statistics explicitly designed for S-PCGC (unlike standard summary statistics analyzed by S-LDSC).
 4. **Estimate functional enrichment**. This is what we came here for.
 
 S-PCGC fully supports S-LDSC input and output formats, which enables it to interact with the S-LDSC ecosystem. We therefore recommend that you [familiarize yourself with S-LDSC](https://github.com/bulik/ldsc/wiki) before running S-PCGC.
@@ -51,6 +51,13 @@ mkdir temp_results
 
 #create a sync file (a one-time offline operation)
 python pcgc_sync.py --annot-chr example/model. --out temp_results/model
+
+#Compute cross-r^2 between functional annotations
+python pcgc_r2.py \
+--bfile example/ref_panel \
+--annot example/model.1. \
+--sync temp_results/model. \
+--out temp_results/prodr2.1
 
 #Compute summary statistics for study 1
 python pcgc_sumstats_creator.py \
@@ -73,14 +80,6 @@ python pcgc_sumstats_creator.py \
 --sync temp_results/model. \
 --prev 0.01 \
 --out temp_results/s2
-
-#Compute cross-r^2 between functional annotations, using only SNPs with summary statistics
-python pcgc_r2.py \
---bfile example/ref_panel \
---annot example/model.1. \
---sync temp_results/model. \
---sumstats temp_results/s1.sumstats.gz \
---out temp_results/prodr2.1
 
 #Run S-PCGC to estimate h^2, rg and functional enrichment
 python pcgc_main.py \
