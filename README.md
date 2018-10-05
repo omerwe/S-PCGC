@@ -43,7 +43,7 @@ S-PCGC carries performs a case-control analysis in four stages:
 S-PCGC fully supports S-LDSC input and output formats, which enables it to interact with the S-LDSC ecosystem. We therefore recommend that you [familiarize yourself with S-LDSC](https://github.com/bulik/ldsc/wiki) before running S-PCGC.
 For example, you can input S-PCGC results into [the S-LDSC scripts for partitioned heritability from continuous annotations](https://github.com/bulik/ldsc/wiki/Partitioned-Heritability-from-Continuous-Annotations). 
 
-
+<br><br>
 ## TL;DR (A Simple Example)
 The following is a simple end-to-end S-PCGC analysis. We will estimate heritability, genetic correlation and functional enrichment for two small simulated studies in the directory `example`. To begin, please cd into the S-PCGC directory, and type the following commands (using the anaconda version of python if available):
 ```
