@@ -132,6 +132,9 @@ A complexity of case-control studies is that the PCs cannot be regressed from th
 1. `--covars-regress <covariate names>`. This is a comma-separated list of names of covariates that will be regressed out of the genotypes (i.e., PCs).
 2. `--pve <pve file>`. This is the name of a file with a single column and no header that shows the fraction of variance explained by each PC mentioned in `--covars-regress`. Common PCA software like [FlashPCA2](https://github.com/gabraham/flashpca) produce such a file.
 
+## Case-Control GWAS Simulator
+To gain more intuition about case-control studies, you may wish to look at the GWAS simulator code included in this package. As a gentle interface, you can look at the last few lines of the file `run_pcgc_simulations.py`. These lines continuously simulate case-control studies with annotations and with no LD, apply PCGC and GCTA estimates, and report the average estimation bias compared to the true generative values. S-LDSC is not included in the comparison because it cannot be invoked in the absence of LD (simulations with LD are possible but are much slower and more complicated; please contact me if you are interested in these).
+
 
 <br><br>
 # Important notes
