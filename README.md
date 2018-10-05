@@ -45,7 +45,7 @@ For example, you can input S-PCGC results into [the S-LDSC scripts for partition
 
 <br><br>
 ## TL;DR (A Simple Example)
-The following is a simple end-to-end S-PCGC analysis. We will estimate heritability, genetic correlation and functional enrichment for two simulated case-control studies of diseases with a population prevalence of 1%, using only SNPs in chromosome 1. All the input files are found in the directory `example`. To begin, please cd into the S-PCGC directory, and type the following commands (using the anaconda version of python if available):
+The following is a simple end-to-end S-PCGC analysis. We will estimate heritability, genetic correlation and functional enrichment for two simulated case-control studies of diseases with a population prevalence of 1%, using only SNPs in chromosome 1. To estimate the cross-product of r^2 values, we will  use a (simulated) reference panel. All the input files are found in the directory `example`. To begin, please cd into the S-PCGC directory, and type the following commands (using the anaconda version of python if available):
 ```
 mkdir temp_results
 
