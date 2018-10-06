@@ -1,3 +1,5 @@
+###this code is adapted from S-LDSC (https://github.com/bulik/ldsc) with permission.
+
 '''
 (c) 2014 Brendan Bulik-Sullivan and Hilary Finucane
 

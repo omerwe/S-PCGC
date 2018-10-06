@@ -625,10 +625,17 @@ class SPCGC:
     def read_annotations(self, args):
         
         #load M_annot files
-        if args.not_M_5_50: M_suffix = 'l2.M'
-        else: M_suffix = 'l2.M_5_50'
-        df_M_annot = pcgc_utils.load_dfs(args.annot, args.annot_chr, M_suffix, 'M', 'annot', header=None,use_tqdm=False)
-        M_annot = df_M_annot.sum(axis=0).values        
+        if args.annot is None and args.annot_chr is None:
+            if args.M is None:
+                raise ValueError('Must specify --M if --annot/--annot-chr are not used')
+            M_annot = np.ones(1) * args.M
+        else:
+            if args.M is not None:
+                raise ValueError('Cannot set --M together with --annot/--annot-chr')
+            if args.not_M_5_50: M_suffix = 'l2.M'
+            else: M_suffix = 'l2.M_5_50'
+            df_M_annot = pcgc_utils.load_dfs(args.annot, args.annot_chr, M_suffix, 'M', 'annot', header=None,use_tqdm=False)
+            M_annot = df_M_annot.sum(axis=0).values        
 
         #load prodr2 files
         df_prodr2 = pcgc_utils.load_dfs(args.prodr2, args.prodr2_chr, 'prodr2', 'prodr2', 'prodr2', use_tqdm=False)
@@ -651,6 +658,8 @@ class SPCGC:
         if df_prodr2.shape[1] == 1:
             df_annotations = None
         else:
+            if args.annot is None and args.annot_chr is None:
+                raise ValueError('You must use --annot/--annot-chr if prodr2 files include more than one annotation')        
             df_annotations = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'annot.gz', 'annot', 'annot', index_col='SNP')
             df_annotations.drop(columns=['CHR', 'CM', 'BP'], inplace=True)
             if not np.allclose(df_annotations.iloc[:,0], 1):
@@ -784,6 +793,8 @@ if __name__ == '__main__':
     parser.add_argument('--not-M-5-50', default=None, action='store_true', help='If set, all reference panel SNPs will be used to estimate h2 (including ones with MAF<0.05)')
     parser.add_argument('--keep-anno', default=None, help='optional comma-separated list of annotations to use')
     parser.add_argument('--remove-anno', default=None, help='optional comma-separated list of annotations to remove')
+    
+    parser.add_argument('--M', default=None, type=float, help='Specify number of (common) SNPs in reference panel (not only SNPs with summary statistics). This flag can only be used when there are no annotations')
     
     parser.add_argument('--fit-intercept', default=False, action='store_true', help='fit an intercept (not recommended for PCGC)')
     parser.add_argument('--no-Gty', default=False, action='store_true', help='Tells PCGC to assume that there are no overlapping individuals (only relevant for genetic correlation estimation)')

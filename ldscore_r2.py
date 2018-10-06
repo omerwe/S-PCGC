@@ -1,3 +1,5 @@
+###this code is adapted from S-LDSC (https://github.com/bulik/ldsc) with permission.
+
 from __future__ import division
 import numpy as np
 import bitarray as ba
