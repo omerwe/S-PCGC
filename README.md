@@ -44,7 +44,7 @@ S-PCGC fully supports S-LDSC input and output formats, which enables it to inter
 For example, you can input S-PCGC results into [the S-LDSC scripts for partitioned heritability from continuous annotations](https://github.com/bulik/ldsc/wiki/Partitioned-Heritability-from-Continuous-Annotations). 
 
 <br><br>
-# A simple example
+# A toy example
 The following is a simple end-to-end S-PCGC analysis, which can run in ~2 minutes. We will estimate heritability, genetic correlation and enrichment for four simulated functional annotations in two simulated case-control studies with 250 shared controls and a disease population prevalence of 1%, using only SNPs in chromosome 1. To estimate the cross-product of r^2 values, we will  use a (simulated) reference panel. All the input files are found in the directory `example`. To begin, please cd into the S-PCGC directory, and type the following commands (using the anaconda version of python if available):
 ```
 mkdir temp_results
@@ -113,7 +113,7 @@ cat temp_results/results.s2.results | column -t
 
 
 # An example with real annotations
-The following example uses real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. To run this example, you need a directory called `1000G` that contains plink files of European individuals from the 1000 genomes reference panel (one file per chromosome; see download instructions below). You can create a symbolic link to this directory from your working directory with the command `ln -s <path_to_1000G> 1000G`. Alternatively, you can skip the stage that require 1000G data by simply downloading the r^2 product files (see instructions in the example code itself).
+The following example uses simulated genotypes and real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. To run this example, you need a directory called `1000G` that contains plink files of European individuals from the 1000 genomes reference panel (one file per chromosome; see download instructions below). You can create a symbolic link to this directory from your working directory with the command `ln -s <path_to_1000G> 1000G`. Alternatively, you can skip the stage that require 1000G data by simply downloading the r^2 product files (see instructions in the example code itself).
 ```
 #download and uncompress the Baseline-LD (v2) annotations
 wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.0_ldscores.tgz
