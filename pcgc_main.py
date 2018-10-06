@@ -491,9 +491,9 @@ class SPCGC:
         gencov_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=np.object)
         rg_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=np.object)
         for i in xrange(len(pcgc_data_list)):
-            oi = pcgc_data_list[i]            
+            oi = pcgc_data_list[i]
             cov_ii = self.create_cov_obj(oi, oi, annotations_sumstats_noneg, prodr2_table, args.n_blocks,
-                                         M_annot, M_annot_noneg2, min_annot, category_names, overlap_matrix, M_tot, args.fit_intercept, is_continuous)
+                                         M_annot, M_annot_noneg2, min_annot, category_names, overlap_matrix, M_tot, fit_intercept=False, is_continuous=is_continuous)
             gencov_arr[i,i] = cov_ii
             rg_arr[i,i] = SPCGC_RG(cov_ii, cov_ii, cov_ii, M_annot, category_names)
         
@@ -503,7 +503,7 @@ class SPCGC:
                 oi = pcgc_data_list[i]
                 oj = pcgc_data_list[j]
                 cov_ij = self.create_cov_obj(oi, oj, annotations_sumstats_noneg, prodr2_table, args.n_blocks,
-                                             M_annot, M_annot_noneg2, min_annot, category_names, overlap_matrix, M_tot, args.fit_intercept, is_continuous)
+                                             M_annot, M_annot_noneg2, min_annot, category_names, overlap_matrix, M_tot, fit_intercept=False, is_continuous=is_continuous)
                 gencov_arr[i,j] = cov_ij
                 gencov_arr[j,i] = cov_ij
                 rg_arr[i,j] = SPCGC_RG(gencov_arr[i,i], gencov_arr[j,j], gencov_arr[i,j], M_annot, category_names)
@@ -796,7 +796,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--M', default=None, type=float, help='Specify number of (common) SNPs in reference panel (not only SNPs with summary statistics). This flag can only be used when there are no annotations')
     
-    parser.add_argument('--fit-intercept', default=False, action='store_true', help='fit an intercept (not recommended for PCGC)')
+    #parser.add_argument('--fit-intercept', default=False, action='store_true', help='fit an intercept (not recommended for PCGC)')
     parser.add_argument('--no-Gty', default=False, action='store_true', help='Tells PCGC to assume that there are no overlapping individuals (only relevant for genetic correlation estimation)')
     parser.add_argument('--he', default=False, action='store_true', help='Use HE instead of PCGC')
     parser.add_argument('--no-annot', default=False, action='store_true', help='This will tell PCGC to use only the base annotation')
@@ -809,8 +809,8 @@ if __name__ == '__main__':
     #print splash screen
     splash_screen()
     
-    if args.fit_intercept:
-        raise ValueError('--fit-intercept option is currently not supported')
+    # if args.fit_intercept:
+        # raise ValueError('--fit-intercept option is currently not supported')
     
     #check that the output directory exists
     if os.path.isabs(args.out) and not os.path.exists(os.path.dirname(args.out)):    
