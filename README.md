@@ -148,7 +148,7 @@ for i in {1..22};
 do
     python pcgc_sumstats_creator.py \
     --bfile example/s1_chr${i} \
-    --extract example/good_snps.txt
+    --extract example/good_snps.txt \
     --pheno example/s1.phe \
     --covar example/s1.cov \
     --annot baselineLD_v2.0/baselineLD.${i}. \
