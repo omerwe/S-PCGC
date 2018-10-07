@@ -45,7 +45,7 @@ For example, you can input S-PCGC results into [the S-LDSC scripts for partition
 
 <br><br>
 # A toy example
-The following is a simple end-to-end S-PCGC analysis, which can run in ~2 minutes. We will estimate heritability, genetic correlation and enrichment for four simulated functional annotations in two simulated case-control studies with 250 shared controls and a disease population prevalence of 1%, using only SNPs in chromosome 1. To estimate the cross-product of r^2 values, we will  use a (simulated) reference panel. All the input files are found in the directory `example`. To begin, please cd into the S-PCGC directory, and type the following commands (using the anaconda version of python if available):
+The following is a simple end-to-end S-PCGC analysis, which can run in ~2 minutes. We will estimate heritability, genetic correlation and enrichment for four simulated functional annotations in two simulated case-control studies with 250 shared controls and a disease population prevalence of 1%. To estimate the cross-product of r^2 values, we will  use a (simulated) reference panel. All the input files are found in the directory `example`. To begin, please cd into the S-PCGC directory, and type the following commands (using the anaconda version of python if available):
 ```
 mkdir temp_results
 
@@ -56,28 +56,27 @@ python pcgc_sync.py --annot-chr example/model. --out temp_results/model
 python pcgc_r2.py \
 --bfile example/ref_panel \
 --annot-chr example/model. \
---extract example/chr1_snps.txt \
 --sync temp_results/model. \
---out temp_results/prodr2.1
+--out temp_results/prodr2
 
-#Compute summary statistics for study 1, using only chromosome 1
+#Compute summary statistics for study 1
 python pcgc_sumstats_creator.py \
 --bfile example/s1 \
 --pheno example/s1.phe \
 --covar example/s1.cov \
---frqfile example/model.1. \
---annot example/model.1. \
+--frqfile-chr example/model. \
+--annot-chr example/model. \
 --sync temp_results/model. \
 --prev 0.01 \
 --out temp_results/s1
 
-#Compute summary statistics for study 2, using only chromosome 1
+#Compute summary statistics for study 2
 python pcgc_sumstats_creator.py \
 --bfile example/s2 \
 --pheno example/s2.phe \
 --covar example/s2.cov \
---frqfile example/model.1. \
---annot example/model.1. \
+--frqfile-chr example/model. \
+--annot-chr example/model. \
 --sync temp_results/model. \
 --prev 0.01 \
 --out temp_results/s2
@@ -88,7 +87,7 @@ python pcgc_main.py \
 --sync temp_results/model. \
 --frqfile-chr example/model. \
 --sumstats temp_results/s1.,temp_results/s2. \
---prodr2 temp_results/prodr2.1. \
+--prodr2 temp_results/prodr2. \
 --out temp_results/results
 
 #view heritability estimates for the two studies
@@ -109,8 +108,7 @@ cat temp_results/results.s2.results | column -t
 3. The `.output` results show both marginal and conditional heritability (please see details below).
 4. The flag ```--sumstats``` can accept any number of comma-separated files.
 5. In this example we ran `pcgc_r2.py` on the entire genome. In real data analysis it may be easier to run `pcgc_r2.py` on each chromosome separately, and then use the flag `--prodr2-chr` when calling `pcgc_main.py`
-6. You can use genome-wide summary statistics for all chromosomes instead of just chromosome 1, by replacing the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr`, and remove the `.1` suffix from all the input and output files. If you do this, you will find that the results haven't changed much: In this example, the SNPs on chromosome 1 serve as a reasonable representation of the entire genome.
-7. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
+6. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
 
 
 # An example with real annotations
