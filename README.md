@@ -36,8 +36,8 @@ After downloading, we recommend checking that everything is ok by typing ```pyth
 # Usage overview
 S-PCGC carries performs a case-control analysis in four stages:
 1. **Generate a sync file for your annotations**. This is a very simple offline step that only needs to be run once. It only gathers some information about the annotations (e.g., the minimum value of each annotation across all SNPs).
-2. **Generate summary statistics**. These are specialized summary statistics explicitly designed for S-PCGC (unlike standard summary statistics analyzed by S-LDSC).
-3. **Estimate the cross-product of r^2 values across all pairs of functional annotations, via a reference panel such as 1000 genomes**. This step is similar to LD-score computation.
+2. **Estimate the cross-product of r^2 values across all pairs of functional annotations, via a reference panel such as 1000 genomes**. This step is similar to LD-score computation.
+3. **Generate summary statistics**. These are specialized summary statistics explicitly designed for S-PCGC (unlike standard summary statistics analyzed by S-LDSC).
 4. **Estimate functional enrichment**. This is what we came here for.
 
 S-PCGC fully supports S-LDSC input and output formats, which enables it to interact with the S-LDSC ecosystem. We therefore recommend that you [familiarize yourself with S-LDSC](https://github.com/bulik/ldsc/wiki) before running S-PCGC.
@@ -56,8 +56,9 @@ python pcgc_sync.py --annot-chr example/model. --out temp_results/model
 python pcgc_r2.py \
 --bfile example/ref_panel \
 --annot-chr example/model. \
+--extract example/chr1_snps.txt \
 --sync temp_results/model. \
---out temp_results/prodr2
+--out temp_results/prodr2.1
 
 #Compute summary statistics for study 1, using only chromosome 1
 python pcgc_sumstats_creator.py \
@@ -87,7 +88,7 @@ python pcgc_main.py \
 --sync temp_results/model. \
 --frqfile-chr example/model. \
 --sumstats temp_results/s1.,temp_results/s2. \
---prodr2 temp_results/prodr2. \
+--prodr2 temp_results/prodr2.1. \
 --out temp_results/results
 
 #view heritability estimates for the two studies
@@ -108,12 +109,13 @@ cat temp_results/results.s2.results | column -t
 3. The `.output` results show both marginal and conditional heritability (please see details below).
 4. The flag ```--sumstats``` can accept any number of comma-separated files.
 5. In this example we ran `pcgc_r2.py` on the entire genome. In real data analysis it may be easier to run `pcgc_r2.py` on each chromosome separately, and then use the flag `--prodr2-chr` when calling `pcgc_main.py`
-6. You can compute genome-wide summary statistics for all chromosomes instead of just chromosome 1, by replacing the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr`, and remove the `.1` suffix from all the input and output files. If you do this, you will find that the results haven't changed much. This is because S-PCGC follows the S-LDSC definition of heritability: S-PCGC uses the summary statistics to estimate annotation effects, but it computes heritability and rg across all common SNPs found in the reference panel --- not just ones with summary statistics (see further details below).
+6. You can use genome-wide summary statistics for all chromosomes instead of just chromosome 1, by replacing the flags `--annot`, `--frqfile` with `--annot-chr`, `--frqfile-chr`, and remove the `.1` suffix from all the input and output files. If you do this, you will find that the results haven't changed much: In this example, the SNPs on chromosome 1 serve as a reasonable representation of the entire genome.
 7. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
 
 
 # An example with real annotations
-The following example uses simulated genotypes and real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. To run this example, you need a directory called `1000G` that contains plink files of European individuals from the 1000 genomes reference panel (one file per chromosome; see download instructions below). You can create a symbolic link to this directory from your working directory with the command `ln -s <path_to_1000G> 1000G`. Alternatively, you can skip the stage that require 1000G data by simply downloading the r^2 product files (see instructions in the example code itself).
+The following example uses simulated genotypes and real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. In this example, we will use a 'representative set of genotyped or well-imputed SNPs' stored in the file example/good_snps.txt.
+To run this example, you need a directory called `1000G` that contains plink files of European individuals from the 1000 genomes reference panel (one file per chromosome; see download instructions below). You can create a symbolic link to this directory from your working directory with the command `ln -s <path_to_1000G> 1000G`.
 ```
 #download and uncompress the Baseline-LD (v2) annotations
 wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.0_ldscores.tgz
@@ -122,19 +124,16 @@ tar -xzvf 1000G_Phase3_baselineLD_v2.0_ldscores.tgz
 #run pcgc_sync.py to collect annotations details
 python pcgc_sync.py --annot-chr baselineLD_v2.0/baselineLD. --out baselineLD_v2.0/baselineLD
 
-#run pcgc_r2.py on each chromosome file (WARNING: this step may take a few days if it's not parallelized)
+#run pcgc_r2.py on each chromosome file
 for i in {1..22};
 do
     python pcgc_r2.py \
     --annot baselineLD_v2.0/baselineLD.${i}. \
     --sync baselineLD_v2.0/baselineLD. \
     --bfile 1000G/1000G.EUR.QC.${i} \
+    --extract example/good_snps.txt
     --out baselineLD_v2.0/baselineLD.${i} 
 done
-
-#alternatively: download the .prodr2 files
-wget ....................
-
 
 #Compute 1000G MAFs
 for i in {1..22};
@@ -151,6 +150,7 @@ for i in {1..22};
 do
     python pcgc_sumstats_creator.py \
     --bfile example/s1_chr${i} \
+    --extract example/good_snps.txt
     --pheno example/s1.phe \
     --covar example/s1.cov \
     --annot baselineLD_v2.0/baselineLD.${i}. \
@@ -169,7 +169,7 @@ python pcgc_main.py \
 --prodr2-chr baselineLD_v2.0/baselineLD. \
 --out s1_sumstats/pcgc
 ```
-Note that the resulting h^2 estimates are nonsensical (>1) because the sample is very small compared to the number of annotations.
+The resulting h^2 estimates are nonsensical (>1) because the sample is very small compared to the number of annotations.
 
 
 <br><br>
@@ -200,15 +200,17 @@ To gain more intuition about case-control studies, you may wish to look at the G
 
 <br><br>
 # Important notes
-1. Overlapping individuals (shared between the two studies) will not be automatically detected. Please make sure that overlapping individuals are clearly marked in the plink files by having exactly the same family id and individual id.
+1. `pcgc_r2.py` must use **exactly** the same SNPs as `pcgc_sumstats_creator.py`. If you use `--extract` in one of them, you must use it in the other as well.
 
-2. To account for population stratification, it is not enough to simple include principal components as covariates as is typically done. Instead, you need to invoke ```pcgc_sumstats_creator.py``` with the flags ```--covars-regress``` and ```--pve``` (please see the detailed explanation above).
+2. Overlapping individuals (shared between the two studies) will not be automatically detected. Please make sure that overlapping individuals are clearly marked in the plink files by having exactly the same family id and individual id.
 
-3. The code assumes that the first annotation is always a base annotation that simply assigns 1.0 to all SNPs. Please adhere to this convention!
+3. To account for population stratification, it is not enough to simple include principal components as covariates as is typically done. Instead, you need to invoke ```pcgc_sumstats_creator.py``` with the flags ```--covars-regress``` and ```--pve``` (please see the detailed explanation above).
 
-4. The .output files report two numbers: marginal and conditional heritability. The difference is that conditional heritability conditions on the covariates in the study, meaning that it ignores the variance introduced by the covariates. Most studies report conditional heritability, but we believe that the marginal heritability is more informative. For details, please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952).
+4. The code assumes that the first annotation is always a base annotation that simply assigns 1.0 to all SNPs. Please adhere to this convention!
 
-5. We highly recommend that you provide external estimates of SNP frequencies to pcgc_sumstats_creator.py via the flag `--frqfile`, based on a reference panel. This can prevent bias arising due to the fact that cases are over-enriched in case-control studies, which could bias the MAF estimates and the heritability estimates.
+5. The .output files report two numbers: marginal and conditional heritability. The difference is that conditional heritability conditions on the covariates in the study, meaning that it ignores the variance introduced by the covariates. Most studies report conditional heritability, but we believe that the marginal heritability is more informative. For details, please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952).
+
+6. We highly recommend that you provide external estimates of SNP frequencies to pcgc_sumstats_creator.py via the flag `--frqfile`, based on a reference panel. This can prevent bias arising due to the fact that cases are over-enriched in case-control studies, which could bias the MAF estimates and the heritability estimates.
 
 
 
