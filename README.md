@@ -129,7 +129,7 @@ do
     --annot baselineLD_v2.0/baselineLD.${i}. \
     --sync baselineLD_v2.0/baselineLD. \
     --bfile 1000G/1000G.EUR.QC.${i} \
-    --extract example/good_snps.txt
+    --extract example/good_snps.txt \
     --out baselineLD_v2.0/baselineLD.${i} 
 done
 
