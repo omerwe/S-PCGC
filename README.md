@@ -107,7 +107,7 @@ cat temp_results/results.s2.results | column -t
 2. The `.results` files have the exact same format as S-LDSC output files.
 3. The `.output` results show both marginal and conditional heritability (please see details below).
 4. The flag ```--sumstats``` can accept any number of comma-separated files.
-5. In this example we ran `pcgc_r2.py` on the entire genome. In real data analysis it may be easier to run `pcgc_r2.py` on each chromosome separately, and then use the flag `--prodr2-chr` when calling `pcgc_main.py`
+5. In this example we ran `pcgc_r2.py` and `pcgc_sumstats_creator.py` on the entire genome. In real data analysis it may be easier to run these scripts on each chromosome separately, and then use the flag `--prodr2-chr`, `--sumstats-chr` when calling `pcgc_main.py`
 6. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
 
 
