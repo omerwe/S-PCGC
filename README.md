@@ -112,7 +112,7 @@ cat temp_results/results.s2.results | column -t
 
 
 # An example with real annotations
-The following example uses simulated genotypes and real functional annotations from the [Baseline-LD model](https://www.nature.com/articles/ng.3954). In this example, we will use a 'representative set of genotyped or well-imputed SNPs' stored in the file example/good_snps.txt.
+The following example uses simulated genotypes and real functional annotations from the [Baseline-LD model](https://www.nature.com/articles/ng.3954). In this example, we will use a 'representative set of genotyped or well-imputed SNPs' stored in the file example/good_snps.txt. (generally, 'good SNPs' should be genotyped or well-imputed SNPs (e.g. INFO score >0.9) that passed QC and are not in the MHC region --- see details below).
 To run this example, you need a directory called `1000G` that contains plink files of European individuals from the 1000 genomes reference panel (one file per chromosome; see download instructions below). You can create a symbolic link to this directory from your working directory with the command `ln -s <path_to_1000G> 1000G`.
 ```
 #download and uncompress the Baseline-LD (v2) annotations
@@ -206,15 +206,17 @@ To gain more intuition about case-control studies, you may wish to look at the G
 # Important notes
 1. `pcgc_r2.py` must use **exactly** the same SNPs as `pcgc_sumstats_creator.py`. If you use `--extract` in one of them, you must use it in the other as well.
 
-2. Overlapping individuals (shared between the two studies) will not be automatically detected. Please make sure that overlapping individuals are clearly marked in the plink files by having exactly the same family id and individual id.
+2. The set of SNPs with summary statistics (as in `good_snps.txt` in the example above) should ideally be a set of genotyped or well-imputed SNPs (e.g. INFO score > 0.9) that passed QC. It is highly recommended to also exclude the MHC region (chromosome 6 28M-32M) from these SNPs. One reasonable choice of SNPs is the set of HapMap3 SNPs (which you can download [here](https://data.broadinstitute.org/alkesgroup/LDSCORE/w_hm3.snplist.bz2)), as these SNPs are typically genotyped or well-imputed. However, please make sure to also exclude SNPs within the MHC region.
 
-3. To account for population stratification, it is not enough to simple include principal components as covariates as is typically done. Instead, you need to invoke ```pcgc_sumstats_creator.py``` with the flags ```--covars-regress``` and ```--pve``` (please see the detailed explanation above).
+3. Overlapping individuals (shared between the two studies) will not be automatically detected. Please make sure that overlapping individuals are clearly marked in the plink files by having exactly the same family id and individual id.
 
-4. The code assumes that the first annotation is always a base annotation that simply assigns 1.0 to all SNPs. Please adhere to this convention!
+4. To account for population stratification, it is not enough to simple include principal components as covariates as is typically done. Instead, you need to invoke ```pcgc_sumstats_creator.py``` with the flags ```--covars-regress``` and ```--pve``` (please see the detailed explanation above).
 
-5. The .output files report two numbers: marginal and conditional heritability. The difference is that conditional heritability conditions on the covariates in the study, meaning that it ignores the variance introduced by the covariates. Most studies report conditional heritability, but we believe that the marginal heritability is more informative. For details, please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952).
+5. The code assumes that the first annotation is always a base annotation that simply assigns 1.0 to all SNPs. Please adhere to this convention!
 
-6. We highly recommend that you provide external estimates of SNP frequencies to pcgc_sumstats_creator.py via the flag `--frqfile`, based on a reference panel. This can prevent bias arising due to the fact that cases are over-enriched in case-control studies, which could bias the MAF estimates and the heritability estimates.
+6. The .output files report two numbers: marginal and conditional heritability. The difference is that conditional heritability conditions on the covariates in the study, meaning that it ignores the variance introduced by the covariates. Most studies report conditional heritability, but we believe that the marginal heritability is more informative. For details, please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952).
+
+7. We highly recommend that you provide external estimates of SNP frequencies to pcgc_sumstats_creator.py via the flag `--frqfile`, based on a reference panel. This can prevent bias arising due to the fact that cases are over-enriched in case-control studies, which could bias the MAF estimates and the heritability estimates.
 
 
 
