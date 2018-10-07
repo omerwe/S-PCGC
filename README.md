@@ -122,7 +122,7 @@ tar -xzvf 1000G_Phase3_baselineLD_v2.0_ldscores.tgz
 #run pcgc_sync.py to collect annotations details
 python pcgc_sync.py --annot-chr baselineLD_v2.0/baselineLD. --out baselineLD_v2.0/baselineLD
 
-#run pcgc_r2.py on each chromosome file
+#run pcgc_r2.py on each chromosome file, using the set of 'good SNPs'
 for i in {1..22};
 do
     python pcgc_r2.py \
@@ -130,7 +130,7 @@ do
     --sync baselineLD_v2.0/baselineLD. \
     --bfile 1000G/1000G.EUR.QC.${i} \
     --extract example/good_snps.txt \
-    --out baselineLD_v2.0/baselineLD.${i} 
+    --out baselineLD_v2.0/baselineLD.goodSNPs.${i} 
 done
 
 #Compute 1000G MAFs
@@ -164,7 +164,7 @@ python pcgc_main.py \
 --sync baselineLD_v2.0/baselineLD. \
 --frqfile-chr 1000G/1000G.EUR.QC. \
 --sumstats-chr s1_sumstats/s1_chr \
---prodr2-chr baselineLD_v2.0/baselineLD. \
+--prodr2-chr baselineLD_v2.0/baselineLD.goodSNPs. \
 --out s1_sumstats/pcgc
 
 #view heritabiltiy estimates
