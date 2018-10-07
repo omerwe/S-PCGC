@@ -133,7 +133,7 @@ do
     --out baselineLD_v2.0/baselineLD.goodSNPs.${i} 
 done
 
-#Compute 1000G MAFs
+#Compute 1000G MAFs (please change ~/plink/plink to the local path of your plink executable)
 for i in {1..22};
 do
     ~/plink/plink \
