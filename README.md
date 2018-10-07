@@ -166,8 +166,14 @@ python pcgc_main.py \
 --sumstats-chr s1_sumstats/s1_chr \
 --prodr2-chr baselineLD_v2.0/baselineLD. \
 --out s1_sumstats/pcgc
+
+#view heritabiltiy estimates
+cat s1_sumstats/pcgc.s1_chr.output | column -t
+
+#view functional enrichment estimates
+cat s1_sumstats/pcgc.s1_chr.results | column -t
+
 ```
-The resulting h^2 estimates are nonsensical (>1), but this only because the sample is tiny compared to the number of annotations.
 
 
 <br><br>
