@@ -258,7 +258,7 @@ A: Yes, by using the flag `--rg-annot`. This will create a separate .rg file for
 Q: Can S-PCGC estimate heritability directly from raw genotypes, without using summary statistics?<br>
 A: No. In our experience using summary statistics is preferable, because it allows extremely fast performance at a negligible loss of accuracy. However, if you want an exact PCGC implementation, we recommend trying out [LDAK](http://dougspeed.com/pcgc-regression/). Note that the LDAK implementation is limited to less than 100,000 individuals and 20 annotations.
 
-Q: Can I include LDAK weights?
+Q: Can I include LDAK weights?<br>
 A: Yes - you can just include them as an S-LDSC annotation. If you want to combine these weights with S-LDSC annotations, we recommend creating joint annotations as described in [Gazal et al. 2018 bioRxiv](https://www.biorxiv.org/content/early/2018/01/30/256412).
 
 Q: Can S-PCGC fit an intercept like LDSC?<br>
