@@ -34,7 +34,7 @@ After downloading, we recommend checking that everything is ok by typing ```pyth
 
 <br><br>
 # Usage overview
-S-PCGC carries performs a case-control analysis in four stages:
+S-PCGC performs a case-control analysis in four stages:
 1. **Generate a sync file for your annotations**. This is a very simple offline step that only needs to be run once. It only gathers some information about the annotations (e.g., the minimum value of each annotation across all SNPs).
 2. **Estimate the cross-product of r^2 values across all pairs of functional annotations, via a reference panel such as 1000 genomes**. This step is similar to LD-score computation.
 3. **Generate summary statistics**. These are specialized summary statistics explicitly designed for S-PCGC (unlike standard summary statistics analyzed by S-LDSC).
