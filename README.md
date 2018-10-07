@@ -112,7 +112,7 @@ cat temp_results/results.s2.results | column -t
 
 
 # An example with real annotations
-The following example uses simulated genotypes and real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. In this example, we will use a 'representative set of genotyped or well-imputed SNPs' stored in the file example/good_snps.txt.
+The following example uses simulated genotypes and real functional annotations from the [Baseline-LD model](https://www.nature.com/articles/ng.3954). In this example, we will use a 'representative set of genotyped or well-imputed SNPs' stored in the file example/good_snps.txt.
 To run this example, you need a directory called `1000G` that contains plink files of European individuals from the 1000 genomes reference panel (one file per chromosome; see download instructions below). You can create a symbolic link to this directory from your working directory with the command `ln -s <path_to_1000G> 1000G`.
 ```
 #download and uncompress the Baseline-LD (v2) annotations
