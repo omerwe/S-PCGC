@@ -1,5 +1,5 @@
 # S-PCGC
-Heritability, genetic correlation and functional enrichment estimation for case-control studies
+Heritability, genetic correlation and functional enrichment estimation for case-control studies.
 
 S-PCGC is an adaptation of stratified LD score regression [(S-LDSC)](https://www.nature.com/articles/ng.3404) for case-control studies. Like S-LDSC, S-PCGC can estimate genetic heritability, genetic correlation and functional enrichment. However, S-PCGC is explicitly designed for case-control studies rather than quantitative phenotypes. This can make a large differnce, especially in the presence of strong non-genetic risk factors. Parts of the S-PCGC code are adapted from S-LDSC with permission.
 
