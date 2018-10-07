@@ -234,6 +234,9 @@ A: Absolutely! These summary statistics don't expose any individual-level data. 
 Q: Should I include imputed SNPs in the summary statistics?<br>
 A: Not necessarily. The set of SNPs with summary statistics should be a representative set of common SNPs, correspond to the "regression SNPs" of S-LDSC. We recommend using a set of reliable common SNPs that are either genotyped or well-imputed, such as HapMap3 SNPs (which you can download [here](https://data.broadinstitute.org/alkesgroup/LDSCORE/w_hm3.snplist.bz2)). We also recommend excluding SNPs within the MHC (chromosome 6 28M-32M) from all analyses, as done by S-LDSC and other tools.
 
+Q: Can I use my case-control data for `pcgc_r2.py` instead of a reference panel?
+A: Yes, but this has two caveats: (1) the analysis will be slower with larger data, and (2) for genetic correlation, it makes more sense to use an external reference panel instead of arbitrarily choosing one of the two studies. If you only care about heritability, there's no need for a reference panel. In this case, we suggest that you downsample your data to ~5000 individuals and only run `pcgc_r2.py` on this subset for greater speed.
+
 Q: Can I use standard (publicly available) summary statistics instead of having to create my own summary statistics?<br>
 A: Unfortunately no. To obtain unbiased estimates, S-PCGC must uses specialized summary statistics.
 
