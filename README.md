@@ -36,8 +36,8 @@ After downloading, we recommend checking that everything is ok by typing ```pyth
 # Usage overview
 S-PCGC carries performs a case-control analysis in four stages:
 1. **Generate a sync file for your annotations**. This is a very simple offline step that only needs to be run once. It only gathers some information about the annotations (e.g., the minimum value of each annotation across all SNPs).
-2. **Estimate the cross-product of r^2 values across all pairs of functional annotations, via a reference panel such as 1000 genomes**. This step is similar to LD-score computation, and needs to be done only once and offline.
-3. **Generate summary statistics**. These are specialized summary statistics explicitly designed for S-PCGC (unlike standard summary statistics analyzed by S-LDSC).
+2. **Generate summary statistics**. These are specialized summary statistics explicitly designed for S-PCGC (unlike standard summary statistics analyzed by S-LDSC).
+3. **Estimate the cross-product of r^2 values across all pairs of functional annotations, via a reference panel such as 1000 genomes**. This step is similar to LD-score computation.
 4. **Estimate functional enrichment**. This is what we came here for.
 
 S-PCGC fully supports S-LDSC input and output formats, which enables it to interact with the S-LDSC ecosystem. We therefore recommend that you [familiarize yourself with S-LDSC](https://github.com/bulik/ldsc/wiki) before running S-PCGC.
@@ -210,8 +210,6 @@ To gain more intuition about case-control studies, you may wish to look at the G
 
 5. We highly recommend that you provide external estimates of SNP frequencies to pcgc_sumstats_creator.py via the flag `--frqfile`, based on a reference panel. This can prevent bias arising due to the fact that cases are over-enriched in case-control studies, which could bias the MAF estimates and the heritability estimates.
 
-6. S-PCGC estimates h^2 across all common SNPs in the reference panel, including ones without summary statistics (e.g. unimputed SNPs), exactly like S-LDSC. This stands in contrast to software such as [gcta](https://cnsgenomics.com/software/gcta/), which only estimates the heritability that is tagged by genotyped and imputed SNPs.
-
 
 
 <br><br>
@@ -220,13 +218,13 @@ Q: Can I create my own annotations?<br>
 A: Yes! Please read the section called "Creating an annot file" in the [S-LDSC wiki](https://github.com/bulik/ldsc/wiki/LD-Score-Estimation-Tutorial) for instructions.
 
 Q: Can I run just a basic analysis without functional annotations?<br>
-A: Sure! Just omit the --annot and --annot-chr flags, and S-LDSC will perform a simple analysis.
+A: Yes. Just omit the --annot and --annot-chr flags, and S-LDSC will perform a simple analysis.
 
 Q: Is it safe to make the summary statistics files publicly available?<br>
 A: Absolutely! These summary statistics don't expose any individual-level data. You may see that some of the output files include individual ids, but this is only intended to help identify overlapping individuals. The only information included about these individuals is (a) the noise in the estimation of their kinship with themselves (which should be 1.0 in expectation), and (b) the noise multiplied by their phenotype value. These fields are required to obtain accurate heritability/rg estimates (please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952) for details)
 
 Q: Should I include imputed SNPs in the summary statistics?<br>
-A: Not necessarily. S-PCGC first estimates annotation effects using only SNPs with summary statistics, and then estimates heritability and enrichment using all common SNPs that appear in the reference panel. The set of SNPs with summary statistics corresponds to the set of "regression SNPs" of S-LDSC. We recommend using a set of reliable common SNPs that are either genotyped or well-imputed, such as HapMap3 SNPs. We also recommend excluding SNPs within the MHC (chromosome 6 28M-32M) from all analyses, as done by S-LDSC and other tools.
+A: Not necessarily. The set of SNPs with summary statistics should be a representative set of common SNPs, correspond to the "regression SNPs" of S-LDSC. We recommend using a set of reliable common SNPs that are either genotyped or well-imputed, such as HapMap3 SNPs. We also recommend excluding SNPs within the MHC (chromosome 6 28M-32M) from all analyses, as done by S-LDSC and other tools.
 
 Q: Can I use standard (publicly available) summary statistics instead of having to create my own summary statistics?<br>
 A: Unfortunately no. To obtain unbiased estimates, S-PCGC must uses specialized summary statistics.
@@ -250,7 +248,7 @@ Q: Can S-PCGC estimate heritability directly from raw genotypes, without using s
 A: No. In our experience using summary statistics is preferable, because it allows extremely fast performance at a negligible loss of accuracy. However, if you want an exact PCGC implementation, we recommend trying out [LDAK](http://dougspeed.com/pcgc-regression/). Note that the LDAK implementation is limited to less than 100,000 individuals and 20 annotations.
 
 Q: Can S-PCGC fit an intercept like LDSC?
-A: No. There's no need for an intercept when the summary statistics are created `pcgc_sumstats_creator.py`, because the intercept is then constrained according to the PCGC formula.
+A: No. There's no need for an intercept when the summary statistics are created `pcgc_sumstats_creator.py`, because the intercept is then already known.
 
 <br><br>
 -----------------
