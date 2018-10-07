@@ -9,36 +9,55 @@ import ldscore_r2
 import pcgc_utils
 
 
-def compute_r2_prod(bfile, annot_prefix, annot_chr_prefix, sync_prefix, ld_wind_cm=1, chunk_size=50):
+def compute_r2_prod(args):
 
     # read bim/snp
-    array_snps = ps.PlinkBIMFile(bfile+'.bim')
+    array_snps = ps.PlinkBIMFile(args.bfile+'.bim')
     snpnames = array_snps.df['SNP']
 
     #read annotations file
-    if annot_prefix is None and annot_chr_prefix is None:
+    if args.annot is None and args.annot_chr is None:
         df_annotations = pd.DataFrame(np.ones(snpnames.shape[0]), index=snpnames, columns=['base'])
     else:
-        df_annotations = pcgc_utils.load_dfs(annot_prefix, annot_chr_prefix, 'annot.gz', 'annot', 'annot', join_axis=0, index_col='SNP')
+        df_annotations = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'annot.gz', 'annot', 'annot', join_axis=0, index_col='SNP')
         df_annotations.drop(columns=['CHR', 'CM', 'BP'], inplace=True)    
         
         #apply min_annot correction to ensure no negative values
         category_names = df_annotations.columns
-        if sync_prefix is None:
+        if args.sync is None:
             raise ValueError('--annot must be used together with --sync')        
-        df_sync = pd.read_table(sync_prefix+'sync', header=None, delim_whitespace=True, index_col=0, squeeze=True)        
+        df_sync = pd.read_table(args.sync+'sync', header=None, delim_whitespace=True, index_col=0, squeeze=True)        
         if df_sync.shape[0] != len(category_names) or not np.all(df_sync.index == category_names):
             raise ValueError('Annotations in sync file do not match those in annotations/prodr2 files')
         min_annot = df_sync.values
         df_annotations -= min_annot
+        
+    #mark which SNPs to keep
+    if args.exclude is None and args.extract is None:
+        keep_snps = None
+    else:
+        is_good_snp = np.ones(len(snpnames), dtype=np.bool)
+        if args.exclude is not None:
+            df_exclude = pd.read_table(args.exclude, squeeze=True, header=None)
+            is_good_snp = is_good_snp & (~snpnames.isin(df_exclude))
+            logging.info('Excluding %d SNPs'%(np.sum(~snpnames.isin(df_exclude))))
+        if args.extract is not None:
+            df_extract = pd.read_table(args.extract, squeeze=True, header=None)
+            is_good_snp = is_good_snp & (snpnames.isin(df_extract))
+            logging.info('Extracting %d SNPs'%(np.sum(snpnames.isin(df_extract))))
+        keep_snps = np.where(is_good_snp)[0]
+        snpnames = snpnames.iloc[keep_snps]
     
     #keep only annotations of SNPs in plink file
     if not snpnames.isin(df_annotations.index).all():
         raise ValueError('not all SNPs have annotations')
     df_annotations = df_annotations.loc[snpnames]
     
+    logging.info('Computing r^2 products for %d SNPs'%(len(snpnames)))
+    
+    
     #find #individuals in bfile
-    df_fam = pd.read_table(bfile+'.fam', header=None)
+    df_fam = pd.read_table(args.bfile+'.fam', header=None)
     n = df_fam.shape[0]
     
     #read plink file    
@@ -46,19 +65,19 @@ def compute_r2_prod(bfile, annot_prefix, annot_chr_prefix, sync_prefix, ld_wind_
     mafMin = None
     reload(ldscore_r2)
     logging.info('Loading SNP file...')
-    geno_array = ldscore_r2.PlinkBEDFile(bfile+'.bed', n, array_snps, keep_snps=None,
+    geno_array = ldscore_r2.PlinkBEDFile(args.bfile+'.bed', n, array_snps, keep_snps=keep_snps,
         keep_indivs=keep_indivs, mafMin=mafMin)
         
     #compute r2_prod_table
     logging.info('Computing r2 prod...')
     coords = np.array(array_snps.df['CM'])[geno_array.kept_snps]
-    block_left = ldscore_r2.getBlockLefts(coords, ld_wind_cm)
+    block_left = ldscore_r2.getBlockLefts(coords, args.ld_wind_cm)
     if block_left[len(block_left)-1] == 0:
         error_msg = 'Only a single block selected - this is probably a mistake'
         raise ValueError(error_msg)
     t0 = time.time()
     geno_array._currentSNP = 0
-    r2prod_table = geno_array.ldScoreVarBlocks(block_left, chunk_size, annot=df_annotations.values)
+    r2prod_table = geno_array.ldScoreVarBlocks(block_left, args.chunk_size, annot=df_annotations.values)
     
     df_r2prod_table = pd.DataFrame(r2prod_table, index=df_annotations.columns, columns=df_annotations.columns)
     return df_r2prod_table
@@ -74,6 +93,8 @@ if __name__ == '__main__':
     parser.add_argument('--annot', default=None, help='prefix of annotations file')
     parser.add_argument('--annot-chr', default=None, help='Multi-chromosome prefix of annotations file')
     parser.add_argument('--sync', default=None, help='Prefix of pcgc sync file, created by pcgc_sync.py')
+    parser.add_argument('--extract', default=None, help='Name of files with names of SNPs to use. Other SNPs will not be used')
+    parser.add_argument('--exclude', default=None, help='Name of files with names of SNPs to exclude')
     parser.add_argument('--out', required=True, help='output file prefix')
     parser.add_argument('--ld-wind-cm', type=float, default=1.0, help='window size to be used for estimating r2 products in units of centiMorgans (cM).')
     parser.add_argument('--chunk-size',  type=int, default=50, help='chunk size for r2 product calculation')
@@ -85,7 +106,7 @@ if __name__ == '__main__':
         
     pcgc_utils.configure_logger(args.out)        
     
-    df_prod_r2 = compute_r2_prod(args.bfile, args.annot, args.annot_chr, args.sync, ld_wind_cm=args.ld_wind_cm, chunk_size=args.chunk_size)
+    df_prod_r2 = compute_r2_prod(args)
     df_prod_r2.to_csv(args.out+'.prodr2', sep='\t', float_format='%0.5e')
     
     

@@ -23,7 +23,7 @@ def splash_screen():
     
 
 class SPCGC_Data:
-    def __init__(self, args, sumstats_prefix, sumstats_prefix_chr, category_names, mean_l2):
+    def __init__(self, args, sumstats_prefix, sumstats_prefix_chr, category_names, sum_l2):
         
         #load summary statistics
         df_sumstats, var_t, pve, mean_Q, N = self.read_sumstats(args, sumstats_prefix, sumstats_prefix_chr)        
@@ -35,6 +35,7 @@ class SPCGC_Data:
             deflation_ratio = 1.0
         else:            
             df_Gty, M_base = self.read_Gty_files(args, sumstats_prefix, sumstats_prefix_chr, category_names, N, mean_Q)
+            mean_l2 = sum_l2 / df_sumstats.shape[0]
             trace_ratios, deflation_ratio = \
                 self.compute_deflation_ratios(sumstats_prefix, sumstats_prefix_chr, pve, N, mean_l2, M_base)
         
@@ -417,26 +418,26 @@ class SPCGC:
             assert len(M_annot)==1
             overlap_matrix = np.matrix(np.array([[M_annot[0]]]))
             M_tot = M_annot[0]
-            M_annot_noneg2 = np.ones(1) * M_tot
+            #M_annot_noneg2 = M_annot[:1]
         else:
             overlap_matrix, M_tot = self.compute_overlap_matrix(args, df_annotations)
-            M_annot_noneg2 = np.einsum('ij,ij->j', df_annotations - min_annot, df_annotations - min_annot)
+            #M_annot_noneg2 = np.einsum('ij,ij->j', df_annotations - min_annot, df_annotations - min_annot)
         
         #create PCGC_data objects
-        mean_l2 = prodr2_table[0,0] / M_annot_noneg2[0]
+        sum_l2 = prodr2_table[0,0]
         if args.sumstats is not None:
             if args.sumstats_chr is not None:
                 raise ValueError('cannot use both --sumstats and --sumstats-chr')
             sumstats_prefix_list = args.sumstats.split(',')
             pcgc_data_list = \
-                [SPCGC_Data(args, sumstats_prefix, None, category_names, mean_l2) for \
+                [SPCGC_Data(args, sumstats_prefix, None, category_names, sum_l2) for \
                 sumstats_prefix in sumstats_prefix_list]
         else:
             if args.sumstats_chr is None:
                 raise ValueError('you muse use either --sumstats or --sumstats-chr')
             sumstats_prefix_chr_list = args.sumstats_chr.split(',')
             pcgc_data_list = \
-                [SPCGC_Data(args, None, sumstats_prefix_chr, category_names, mean_l2) for \
+                [SPCGC_Data(args, None, sumstats_prefix_chr, category_names, sum_l2) for \
                 sumstats_prefix_chr in sumstats_prefix_chr_list]
 
 
@@ -493,7 +494,7 @@ class SPCGC:
         for i in xrange(len(pcgc_data_list)):
             oi = pcgc_data_list[i]
             cov_ii = self.create_cov_obj(oi, oi, annotations_sumstats_noneg, prodr2_table, args.n_blocks,
-                                         M_annot, M_annot_noneg2, min_annot, category_names, overlap_matrix, M_tot, fit_intercept=False, is_continuous=is_continuous)
+                                         M_annot, min_annot, category_names, overlap_matrix, M_tot, fit_intercept=False, is_continuous=is_continuous)
             gencov_arr[i,i] = cov_ii
             rg_arr[i,i] = SPCGC_RG(cov_ii, cov_ii, cov_ii, M_annot, category_names)
         
@@ -503,7 +504,7 @@ class SPCGC:
                 oi = pcgc_data_list[i]
                 oj = pcgc_data_list[j]
                 cov_ij = self.create_cov_obj(oi, oj, annotations_sumstats_noneg, prodr2_table, args.n_blocks,
-                                             M_annot, M_annot_noneg2, min_annot, category_names, overlap_matrix, M_tot, fit_intercept=False, is_continuous=is_continuous)
+                                             M_annot, min_annot, category_names, overlap_matrix, M_tot, fit_intercept=False, is_continuous=is_continuous)
                 gencov_arr[i,j] = cov_ij
                 gencov_arr[j,i] = cov_ij
                 rg_arr[i,j] = SPCGC_RG(gencov_arr[i,i], gencov_arr[j,j], gencov_arr[i,j], M_annot, category_names)
@@ -565,11 +566,10 @@ class SPCGC:
         
         
     def create_cov_obj(self, oi, oj, annotations_sumstats_noneg, prodr2_table, n_blocks,
-                       M_annot, M_annot_noneg2, min_annot, category_names, overlap_matrix, M_tot, fit_intercept, is_continuous):
+                       M_annot, min_annot, category_names, overlap_matrix, M_tot, fit_intercept, is_continuous):
         coef, delete_values, intercept, delete_intercepts = self.compute_taus(
                                annotations_sumstats_noneg,
                                M_annot,
-                               M_annot_noneg2,
                                min_annot,
                                prodr2_table,            
                                oi.df_sumstats['pcgc_sumstat'].values, oj.df_sumstats['pcgc_sumstat'].values,
@@ -679,7 +679,6 @@ class SPCGC:
     def compute_taus(self, 
                     annotations_sumstats_noneg,
                     M_annot,
-                    M_annot_noneg2,
                     min_annot,
                     prodr2_table,    
                     sumstats1, sumstats2,
@@ -721,7 +720,7 @@ class SPCGC:
         #compute Z.T.dot(Y) (numer) and ZTZ (denom)        
         M_annot_sumstats2 = np.einsum('ij,ij->j', annotations_sumstats_noneg, annotations_sumstats_noneg)
         ZTZ = prodr2_table * \
-            (np.outer(trace_ratios1,trace_ratios2)  /  np.outer(M_annot_noneg2, M_annot_noneg2))
+            (np.outer(trace_ratios1,trace_ratios2)  /  np.outer(M_annot_sumstats2, M_annot_sumstats2))
         ZTY = z12 / M_annot_sumstats2 - Gty12
         
         #compute taus
