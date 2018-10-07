@@ -167,7 +167,7 @@ python pcgc_main.py \
 --prodr2-chr baselineLD_v2.0/baselineLD. \
 --out s1_sumstats/pcgc
 ```
-The resulting h^2 estimates are nonsensical (>1) because the sample is very small compared to the number of annotations.
+The resulting h^2 estimates are nonsensical (>1), but this only because the sample is tiny compared to the number of annotations.
 
 
 <br><br>
