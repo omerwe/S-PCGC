@@ -254,7 +254,7 @@ Q: Can S-PCGC estimate heritability directly from raw genotypes, without using s
 A: No. In our experience using summary statistics is preferable, because it allows extremely fast performance at a negligible loss of accuracy. However, if you want an exact PCGC implementation, we recommend trying out [LDAK](http://dougspeed.com/pcgc-regression/). Note that the LDAK implementation is limited to less than 100,000 individuals and 20 annotations.
 
 Q: Can S-PCGC fit an intercept like LDSC?<br>
-A: No. There's no need for an intercept when the summary statistics are created `pcgc_sumstats_creator.py`, because the intercept is then already known.
+A: No. There's no need to estimate an intercept when the summary statistics are created with `pcgc_sumstats_creator.py`, because the intercept is already known.
 
 <br><br>
 -----------------
