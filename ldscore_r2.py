@@ -210,8 +210,12 @@ class __GenotypeArrayInMemory__(object):
             np.dot(A.T, B / n, out=rfuncAB)
             rfuncAB = func(rfuncAB)
             #cor_sum[l_A:l_A+b, :] += np.dot(rfuncAB, annot[l_B:l_B+c, :])
-            r2prod_table += self.compute_r2prod(rfuncAB, annot[l_A:l_A+b, :], annot[l_B:l_B+c, :])
-            #r2prod_table[i,j] should be equal to np.sum(rfuncAB * np.outer(annot**2, annot**2)
+            ii = self.is_r2_snp[l_A:l_A+b]
+            if np.any(ii):
+                r2prod_table += self.compute_r2prod(rfuncAB[ii], annot[l_A:l_A+b, :][ii], annot[l_B:l_B+c, :])
+            #import ipdb; ipdb.set_trace()
+            ###r2prod_table += self.compute_r2prod(rfuncAB, annot[l_A:l_A+b, :], annot[l_B:l_B+c, :])
+            #r2prod_table[i,j] should be equal to np.sum(rfuncAB[ii,:] * annot[l_A:l_A+b,i][ii]**2  * annot[l_B:l_B+c,j][np.newaxis,:]**2)
             
         # chunk to right of block
         b0 = b
@@ -251,14 +255,24 @@ class __GenotypeArrayInMemory__(object):
 
             np.dot(A.T, B / n, out=rfuncAB)
             rfuncAB = func(rfuncAB)
+            
             #cor_sum[l_A:l_A+b, :] += np.dot(rfuncAB, annot[l_B:l_B+c, :])
+            ii = self.is_r2_snp[l_A:l_A+b]
+            if np.any(ii):
+                r2prod_table += self.compute_r2prod(rfuncAB[ii], annot[l_A:l_A+b, :][ii], annot[l_B:l_B+c, :])
+                
             #cor_sum[l_B:l_B+c, :] += np.dot(annot[l_A:l_A+b, :].T, rfuncAB).T
-            r2prod_table += self.compute_r2prod(rfuncAB, annot[l_A:l_A+b, :], annot[l_B:l_B+c, :])
-            r2prod_table += self.compute_r2prod(rfuncAB.T, annot[l_B:l_B+c, :], annot[l_A:l_A+b, :])
+            ii = self.is_r2_snp[l_B:l_B+c]    
+            if np.any(ii):
+                r2prod_table += self.compute_r2prod((rfuncAB.T)[ii], annot[l_B:l_B+c, :][ii], annot[l_A:l_A+b, :])
+                
             np.dot(B.T, B / n, out=rfuncBB)
             rfuncBB = func(rfuncBB)
+            
             #cor_sum[l_B:l_B+c, :] += np.dot(rfuncBB, annot[l_B:l_B+c, :])
-            r2prod_table += self.compute_r2prod(rfuncBB, annot[l_B:l_B+c, :], annot[l_B:l_B+c, :])
+            ii = self.is_r2_snp[l_B:l_B+c]
+            if np.any(ii):
+                r2prod_table += self.compute_r2prod(rfuncBB[ii], annot[l_B:l_B+c, :][ii], annot[l_B:l_B+c, :])
             ###import ipdb; ipdb.set_trace()
 
         return r2prod_table
@@ -268,7 +282,7 @@ class PlinkBEDFile(__GenotypeArrayInMemory__):
     '''
     Interface for Plink .bed format
     '''
-    def __init__(self, fname, n, snp_list, keep_snps=None, keep_indivs=None, mafMin=None):
+    def __init__(self, fname, n, snp_list, is_r2_snp, keep_snps=None, keep_indivs=None, mafMin=None):
         self._bedcode = {
             2: ba.bitarray('11'),
             9: ba.bitarray('10'),
@@ -278,6 +292,8 @@ class PlinkBEDFile(__GenotypeArrayInMemory__):
 
         __GenotypeArrayInMemory__.__init__(self, fname, n, snp_list, keep_snps=keep_snps,
             keep_indivs=keep_indivs, mafMin=mafMin)
+            
+        self.is_r2_snp = is_r2_snp
 
     def __read__(self, fname, m, n):
         if not fname.endswith('.bed'):

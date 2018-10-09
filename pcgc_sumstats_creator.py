@@ -176,10 +176,10 @@ class PCGC_Sumstats:
             category_names = df_annotations.columns
             if sync_prefix is None:
                 raise ValueError('--annot and --annot-chr must be used together with --sync')
-            df_sync = pd.read_table(sync_prefix+'sync', header=None, delim_whitespace=True, index_col=0, squeeze=True)        
+            df_sync = pd.read_table(sync_prefix+'sync', index_col='Category')
             if df_sync.shape[0] != len(category_names) or not np.all(df_sync.index == category_names):
                 raise ValueError('Annotations in sync file do not match those in annotations/prodr2 files')
-            min_annot = df_sync.values
+            min_annot = df_sync['min_annot'].values
             df_annotations -= min_annot
                 
         #remove annotations for unused SNPs

@@ -59,7 +59,7 @@ def test_sumstats(tmpdir):
             
     #run PCGC
     pcgc_command = ['python', 'pcgc_main.py']
-    pcgc_command += ['--frqfile-chr', model_fname]
+    #pcgc_command += ['--frqfile-chr', model_fname]
     pcgc_command += ['--annot-chr', model_fname]
     pcgc_command += ['--prodr2-chr', model_fname]
     pcgc_command += ['--sumstats-chr', ','.join(sumstats_list)]
@@ -86,18 +86,18 @@ def test_sumstats(tmpdir):
     df_rg_test = df_rg_test.astype(np.float)
     assert np.allclose(df_rg_gold, df_rg_test)
     
-    #check main output fields
-    for study_name in study_names:
-        df_output_test = pd.read_table(os.path.join(dir_test, 'results.%s.output'%(study_name)), index_col='Quantity')
-        df_output_gold = pd.read_table(os.path.join(dir_gold, 'results.%s.output'%(study_name)), index_col='Quantity')
-        assert np.allclose(df_output_test, df_output_gold)
-
     #check enrichment
     for study_name in study_names:
         df_enr_test = pd.read_table(os.path.join(dir_test, 'results.%s.results'%(study_name)), index_col='Category')
         df_enr_gold = pd.read_table(os.path.join(dir_gold, 'results.%s.results'%(study_name)), index_col='Category')
         assert np.allclose(df_enr_test, df_enr_gold, equal_nan=True)
     
+    #check main output fields
+    for study_name in study_names:
+        df_output_test = pd.read_table(os.path.join(dir_test, 'results.%s.output'%(study_name)), index_col='Quantity')
+        df_output_gold = pd.read_table(os.path.join(dir_gold, 'results.%s.output'%(study_name)), index_col='Quantity')
+        assert np.allclose(df_output_test, df_output_gold)
+
                 
 
 if __name__ == '__main__':

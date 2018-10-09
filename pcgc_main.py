@@ -271,7 +271,7 @@ class SPCGC_Cov:
         df_dicts = []
         df_dicts.append({'Quantity':'h2_conditional', 'Value':h2_conditional, 'SE':h2_conditional_se})
         df_dicts.append({'Quantity':'h2_marginal', 'Value':h2_marginal, 'SE':h2_marginal_se})
-        ###df_dicts.append({'Quantity':'Intercept', 'Value':self.intercept, 'SE':self.intercept_se})        
+        #df_dicts.append({'Quantity':'Intercept', 'Value':self.intercept, 'SE':self.intercept_se})        
         self.df_h2 = pd.DataFrame(df_dicts, columns=['Quantity', 'Value', 'SE'])
             
         
@@ -376,24 +376,122 @@ class SPCGC_Cov:
 
 class SPCGC:
     def __init__(self, args):
+
+        #create prodr2 table
+        df_prodr2 = self.load_prodr2(args)
+        
+        #create the initial index of all SNPs
+        index_intersect = self.load_all_snp_indices(args)                
+                
+        #create and sync objects for all the sumstats files
+        sum_l2 = df_prodr2.iloc[0,0]
+        pcgc_data_list = self.create_study_objects(args, sum_l2, category_names=df_prodr2.columns)
+        index_intersect = self.sync_data_files(args, pcgc_data_list, index_intersect)
+        
+        #load all the SNP-related data files
+        M_annot, df_prodr2, df_annotations_sumstats_noneg, df_sync, df_overlap, df_l2, df_w_ld = \
+            self.load_annotations_data(args, df_prodr2, index_intersect)
+                                
+        #compute h2 and gencov of each pair of studies
+        gencov_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=np.object)
+        for i in xrange(len(pcgc_data_list)):
+            oi = pcgc_data_list[i]
+            for j in xrange(i+1):
+                oj = pcgc_data_list[j]                
+                cov_ij = self.create_cov_obj(args, oi, oj,
+                                             df_annotations_sumstats_noneg, df_prodr2, df_sync, df_overlap, M_annot,
+                                             df_l2=df_l2, df_w_ld=df_w_ld)
+                gencov_arr[i,j] = cov_ij
+                gencov_arr[j,i] = cov_ij
+                               
+                               
+        #compute rg
+        rg_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=np.object)
+        for i in xrange(len(pcgc_data_list)):
+            for j in xrange(i+1):
+                rg_arr[i,j] = SPCGC_RG(gencov_arr[i,i], gencov_arr[j,j], gencov_arr[i,j], M_annot, df_prodr2.columns)
+                rg_arr[j,i] = rg_arr[i,j]
+                
+        #save class members
+        self.gencov_arr = gencov_arr
+        self.rg_arr = rg_arr
+        
+        #write output
+        self.write_output(args, M_annot)
+        
+        
+    def load_annotations_data(self, args, df_prodr2, index_intersect):
     
-        #load annotations and product of r2
-        df_annotations, M_annot, prodr2_table, category_names = self.read_annotations(args)
-        
-        #load sync file to obtain min_annot
-        if df_annotations is not None:
-            if args.sync is None:
-                raise ValueError('--annot and --annot-chr must be used together with --sync')
-            df_sync = pd.read_table(args.sync+'sync', header=None, delim_whitespace=True, index_col=0, squeeze=True)        
-            if df_sync.shape[0] != len(category_names) or not np.all(df_sync.index == category_names):
-                raise ValueError('Annotations in sync file do not match those in annotations/prodr2 files')
-            min_annot = df_sync.values
+        if args.annot is None and args.annot_chr is None:
+            #create relevant data for a single annotation
+            
+            if args.M is None:
+                raise ValueError('--M must be used when not using --annot or --annot-chr')
+            if args.not_M_5_50 is not None:
+                raise ValueError('--not-M-5-50 cannot be used without using --annot or --annot-chr')
+            if args.fit_intercept:
+                raise ValueError('--fit-intercept cannot be used without using --annot or --annot-chr')
+            M_annot = np.ones(1) * args.M
+            df_annotations_sumstats_noneg = pd.DataFrame(np.ones(len(index_intersect)), index=index_intersect, columns=['base'])
+            df_sync = pd.DataFrame(index=['base'])
+            df_sync['min_annot'] = 0
+            df_sync['M2_5_50'] = args.M
+            df_sync['is_continuous'] = False
+            df_overlap = pd.DataFrame(index=['base'])
+            df_overlap['base'] = args.M
+            df_l2 = None
+            df_w_ld = None
+            
         else:
-            min_annot = np.zeros(1)
         
+            #load M_annot
+            if args.not_M_5_50: M_suffix = 'l2.M'
+            else: M_suffix = 'l2.M_5_50'
+            df_M_annot = pcgc_utils.load_dfs(args.annot, args.annot_chr, M_suffix, 'M', 'annot', header=None,use_tqdm=False)
+            M_annot = df_M_annot.sum(axis=0).values
+            if M_annot.shape[0] != df_prodr2.shape[1]:
+                raise ValueError('.M files have a different number of columns than .prodr2 files')            
+        
+            #read df_sync and overlap matrix
+            if args.sync is None:
+                raise ValueError('--sync not provided')
+            df_sync = pd.read_table(args.sync+'sync', index_col='Category')
+            overlap_suffix = 'overlap' if args.not_M_5_50 else 'overlap_5_50'
+            df_overlap = pd.read_table(args.sync+overlap_suffix, delim_whitespace=True, index_col='Category')
+            if df_sync.shape[0] != df_prodr2.shape[1] or not np.all(df_sync.index == df_prodr2.columns):
+                raise ValueError('sync and prodr2 files must have the same annotations')
+            if df_overlap.shape[0] != df_prodr2.shape[1] or not np.all(df_overlap.index == df_prodr2.columns):
+                raise ValueError('overlap_matrix and prodr2 files must have the same annotations')
+            
+            #read SNP data files
+            df_annotations_sumstats_noneg = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'annot.gz', 'annot', 'annot', index_col='SNP', index_intersect=index_intersect, use_tqdm=True)
+            df_annotations_sumstats_noneg.drop(columns=['CHR', 'CM', 'BP'], inplace=True)
+            if df_annotations_sumstats_noneg.shape[1] != df_prodr2.shape[1] or not np.all(df_annotations_sumstats_noneg.columns == df_prodr2.columns):
+                raise ValueError('annotation and prodr2 files must have the same annotations')
+            df_annotations_sumstats_noneg -= df_sync['min_annot'].values
+            df_list = [df_annotations_sumstats_noneg]
+            if args.fit_intercept:
+                df_l2 = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'l2.ldscore.gz', 'l2.ldscore', 'annot', index_col='SNP', usecols=['SNP', 'baseL2'], index_intersect=index_intersect)
+                df_w_ld = pcgc_utils.load_dfs(args.w_ld, args.w_ld_chr, 'l2.ldscore.gz', 'l2.ldscore', 'w-ld', index_col='SNP', usecols=['SNP', 'L2'], index_intersect=index_intersect)
+                df_l2 = df_l2['baseL2']
+                df_w_ld = df_w_ld['L2']
+                df_list += [df_l2, df_w_ld]
+            else:
+                df_l2, df_w_ld = None, None
+                
+            #make sure that all the dfs are perfectly aligned
+            for df in df_list:
+                index_intersect_df = index_intersect.intersection(df.index)
+                if len(index_intersect_df) < len(index_intersect):
+                    raise ValueError('not all SNPs found in the annotation or LD score files - this shouldn''t happen')
+                is_same = (df.index == index_intersect).all()
+                if not is_same:
+                    df = df.loc[index_intersect]
+                    
         #restrict annotations if requested
         if args.keep_anno is not None or args.remove_anno is not None:
             #Find the set of annotations to select
+            category_names = df_prodr2.columns
             remove_anno = set([] if (args.remove_anno is None) else args.remove_anno.split(','))
             keep_anno = set(category_names if (args.keep_anno is None) else args.keep_anno.split(','))
             if len(keep_anno.intersection(set(category_names))) < len(keep_anno):
@@ -406,46 +504,45 @@ class SPCGC:
             if len(anno_arr) < len(category_names):
                 selected_anno = np.isin(category_names, anno_arr)
                 M_annot = M_annot[selected_anno]
-                prodr2_table = prodr2_table[np.ix_(selected_anno, selected_anno)]
-                category_names = category_names[selected_anno]
-                if df_annotations is not None:
-                    df_annotations = df_annotations[anno_arr]
-                logging.info('%d annotations remained after all exclusion steps'%(len(category_names)))
+                df_prodr2 = df_prodr2.loc[anno_arr, anno_arr]
+                df_annotations_sumstats_noneg = df_annotations_sumstats_noneg[anno_arr]
+                df_sync = df_sync.loc[anno_arr]
+                df_overlap = df_overlap.loc[anno_arr, anno_arr]
+                logging.info('%d annotations remained after applying --keep-anno and --remove anno'%(df_prodr2.shape[1]))
+                            
+        return M_annot, df_prodr2, df_annotations_sumstats_noneg, df_sync, df_overlap, df_l2, df_w_ld
 
         
-        #compute annotations overlap matrix and M_tot (total number of SNPs with annotations)
-        if df_annotations is None:
-            assert len(M_annot)==1
-            overlap_matrix = np.matrix(np.array([[M_annot[0]]]))
-            M_tot = M_annot[0]
-            #M_annot_noneg2 = M_annot[:1]
-        else:
-            overlap_matrix, M_tot = self.compute_overlap_matrix(args, df_annotations)
-            #M_annot_noneg2 = np.einsum('ij,ij->j', df_annotations - min_annot, df_annotations - min_annot)
-        
+                
+    def create_study_objects(self, args, sum_l2, category_names):
+                
         #create PCGC_data objects
-        sum_l2 = prodr2_table[0,0]
-        if args.sumstats is not None:
-            if args.sumstats_chr is not None:
-                raise ValueError('cannot use both --sumstats and --sumstats-chr')
-            sumstats_prefix_list = args.sumstats.split(',')
-            pcgc_data_list = \
-                [SPCGC_Data(args, sumstats_prefix, None, category_names, sum_l2) for \
-                sumstats_prefix in sumstats_prefix_list]
-        else:
-            if args.sumstats_chr is None:
-                raise ValueError('you muse use either --sumstats or --sumstats-chr')
-            sumstats_prefix_chr_list = args.sumstats_chr.split(',')
-            pcgc_data_list = \
-                [SPCGC_Data(args, None, sumstats_prefix_chr, category_names, sum_l2) for \
-                sumstats_prefix_chr in sumstats_prefix_chr_list]
-
+        if args.sumstats is None and args.sumstats_chr is None:
+            raise ValueError('you muse use either --sumstats or --sumstats-chr')
+        if (args.sumstats is not None) and (args.sumstats_chr is not None):
+            raise ValueError('you muse use either --sumstats or --sumstats-chr')
+        sumstats_prefix_list = \
+            args.sumstats.split(',') if (args.sumstats is not None) else args.sumstats_chr.split(',')
+        pcgc_data_list = []
+        
+        for f in sumstats_prefix_list:
+            if args.sumstats is not None:
+                pcgc_study_obj = SPCGC_Data(args, f, None, category_names, sum_l2)
+            else:
+                pcgc_study_obj = SPCGC_Data(args, None, f, category_names, sum_l2)
+            pcgc_data_list.append(pcgc_study_obj)
+            
+        return pcgc_data_list
+        
+    
+    def sync_data_files(self, args, pcgc_data_list, index_intersect):
+    
+        sumstats_prefix_list = \
+            args.sumstats.split(',') if (args.sumstats is not None) else args.sumstats_chr.split(',')    
 
         #sync all the sumstats in all the files
-        if df_annotations is None:
+        if index_intersect is None:
             index_intersect = pcgc_data_list[0].df_sumstats.index
-        else:
-            index_intersect = df_annotations.index
         n_max = len(index_intersect)
         for pcgc_data_obj in pcgc_data_list:
             index_intersect = pcgc_data_obj.df_sumstats.index.intersection(index_intersect)
@@ -472,50 +569,10 @@ class SPCGC:
                     new_z = pcgc_data_obj.df_sumstats['pcgc_sumstat'].values.copy()
                     new_z[is_flipped] *= -1
                     pcgc_data_obj.df_sumstats['pcgc_sumstat'] = new_z                    
-                    if args.sumstats is not None:
-                        fname1, fname2 = sumstats_prefix_list[0], sumstats_prefix_list[obj_i]
-                    else:
-                        fname1, fname2 = sumstats_prefix_chr_list[0], sumstats_prefix_chr_list[obj_i]
+                    fname1, fname2 = sumstats_prefix_list[0], sumstats_prefix_list[obj_i]
                     logging.warning('Flipping %d SNPs in %s to match the minor alleles of %s'%(is_flipped.sum(), fname1, fname2))
 
-        #create an array of annotations of only SNPs with summary statistics
-        annotations_sumstats_noneg = self.filter_annotations_sumstats(df_annotations, index_intersect, category_names) - min_annot
-        
-        #check which annotations are continuous
-        is_continuous = np.zeros(len(category_names), dtype=np.bool)
-        if df_annotations is not None:
-            for c_i,c in enumerate(category_names):
-                if len(np.unique(df_annotations[c])) > 2:
-                    is_continuous[c_i] = True
-
-        #compute h2 and rg of each study with itself (which is equal to 1.0), just for completeness
-        gencov_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=np.object)
-        rg_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=np.object)
-        for i in xrange(len(pcgc_data_list)):
-            oi = pcgc_data_list[i]
-            cov_ii = self.create_cov_obj(oi, oi, annotations_sumstats_noneg, prodr2_table, args.n_blocks,
-                                         M_annot, min_annot, category_names, overlap_matrix, M_tot, fit_intercept=False, is_continuous=is_continuous)
-            gencov_arr[i,i] = cov_ii
-            rg_arr[i,i] = SPCGC_RG(cov_ii, cov_ii, cov_ii, M_annot, category_names)
-        
-        #compute gencov and rg
-        for i in xrange(len(pcgc_data_list)):
-            for j in xrange(i):
-                oi = pcgc_data_list[i]
-                oj = pcgc_data_list[j]
-                cov_ij = self.create_cov_obj(oi, oj, annotations_sumstats_noneg, prodr2_table, args.n_blocks,
-                                             M_annot, min_annot, category_names, overlap_matrix, M_tot, fit_intercept=False, is_continuous=is_continuous)
-                gencov_arr[i,j] = cov_ij
-                gencov_arr[j,i] = cov_ij
-                rg_arr[i,j] = SPCGC_RG(gencov_arr[i,i], gencov_arr[j,j], gencov_arr[i,j], M_annot, category_names)
-                rg_arr[j,i] = rg_arr[i,j]                
-                
-        #save class members
-        self.gencov_arr = gencov_arr
-        self.rg_arr = rg_arr
-        
-        #write output
-        self.write_output(args, M_annot)
+        return index_intersect
         
         
     def write_output(self, args, M_annot):    
@@ -536,9 +593,6 @@ class SPCGC:
             if args.print_delete_vals:
                 np.savetxt(fname_prefix+'.delete', self.gencov_arr[i,i].delete_values.dot(M_annot))
                 np.savetxt(fname_prefix+'.part_delete', self.gencov_arr[i,i].delete_values)
-            
-                
-            
             
         #write rg results to file
         if len(fname_list) > 1:
@@ -563,147 +617,96 @@ class SPCGC:
                     fname_rg = '%s.%s.%s.rg_annot'%(args.out, fname1, fname2)
                     self.rg_arr[i,j].df_annot_rg.to_csv(fname_rg, sep='\t', index=False, float_format='%0.3e')
         
-        
-        
-    def create_cov_obj(self, oi, oj, annotations_sumstats_noneg, prodr2_table, n_blocks,
-                       M_annot, min_annot, category_names, overlap_matrix, M_tot, fit_intercept, is_continuous):
-        coef, delete_values, intercept, delete_intercepts = self.compute_taus(
-                               annotations_sumstats_noneg,
-                               M_annot,
-                               min_annot,
-                               prodr2_table,            
-                               oi.df_sumstats['pcgc_sumstat'].values, oj.df_sumstats['pcgc_sumstat'].values,
-                               oi.N, oj.N,
-                               oi.mean_Q, oj.mean_Q,
-                               oi.df_Gty, oj.df_Gty,
-                               oi.trace_ratios, oj.trace_ratios,
-                               oi.deflation_ratio, oj.deflation_ratio,
-                               n_blocks,
-                               fit_intercept)
-        cov_obj = SPCGC_Cov(coef, delete_values, intercept, delete_intercepts, M_annot, category_names, overlap_matrix, M_tot, oi.var_t, oj.var_t, is_continuous)
-        return cov_obj
-    
-    
-            
-            
-    def compute_overlap_matrix(self, args, df_annotations):
-        
-        #filter out low-frequency SNPs from annotations and compute M_tot
-        if not args.not_M_5_50:
-            df_frq = pcgc_utils.load_dfs(args.frqfile, args.frqfile_chr, 'frq', 'frq', 'frqfile', index_col='SNP')
-            df_frq = df_frq[['MAF']]
-            if not np.all(df_annotations.index.isin(df_frq.index)):
-                raise ValueError('not all SNPs in annotation files have MAFs in the .frq files')
-            df_frq = df_frq.loc[(df_frq['MAF']>0.05) & (df_frq['MAF']<0.95)]
-            is_same = (df_frq.shape[0]==df_annotations.shape[0]) \
-                    and (df_frq.index == df_annotations.index).all()
-            if not is_same:
-                df_annotations = df_annotations.merge(df_frq.iloc[:,:0], left_index=True, right_index=True)
-        M_tot = df_annotations.shape[0]
-        overlap_matrix = np.matrix(df_annotations.T.values.dot(df_annotations.values))
-        
-        return overlap_matrix, M_tot
-        
-        
-    def filter_annotations_sumstats(self, df_annotations, df_sumstats_index, category_names):
-        #create a df of annotations, filtered to only SNPs with summary statistics
-        if df_annotations is None and len(category_names) == 1:
-            df_annotations_sumstats = pd.DataFrame(np.ones(len(df_sumstats_index)), columns=[category_names], index=df_sumstats_index)
-        else:
-            is_same = (len(df_sumstats_index)==df_annotations.shape[0]) \
-                    and (df_sumstats_index == df_annotations.index).all()
-            if is_same:
-                df_annotations_sumstats = df_annotations
-            else:
-                if not np.all(df_sumstats_index.isin(df_annotations.index)):
-                    raise ValueError('Not all SNPs with summary statistics are in the annotation files')
-                df_annotations_sumstats = df_annotations.loc[df_sumstats_index]
                 
-        return df_annotations_sumstats.values
+    def create_cov_obj(self, args, oi, oj,
+             df_annotations_sumstats_noneg, df_prodr2, df_sync, df_overlap, M_annot,
+             df_l2, df_w_ld): 
+                       
+        #estimate taus and their ses
+        coef, delete_values, intercept, delete_intercepts = \
+            self.compute_taus(args, oi, oj,
+                               df_annotations_sumstats_noneg,
+                               df_prodr2,
+                               df_sync,
+                               M_annot,
+                               df_l2, df_w_ld)
+                    
+        #create variance/covariance object
+        M_tot = df_overlap.iloc[0,0]
+        cov_obj = SPCGC_Cov(coef, delete_values, intercept, delete_intercepts, M_annot, 
+                    df_prodr2.columns, df_overlap.values, M_tot, oi.var_t, oj.var_t,
+                    df_sync['is_continuous'])
+        return cov_obj
         
-
-    def read_annotations(self, args):
-        
-        #load M_annot files
-        if args.annot is None and args.annot_chr is None:
-            if args.M is None:
-                raise ValueError('Must specify --M if --annot/--annot-chr are not used')
-            M_annot = np.ones(1) * args.M
-        else:
-            if args.M is not None:
-                raise ValueError('Cannot set --M together with --annot/--annot-chr')
-            if args.not_M_5_50: M_suffix = 'l2.M'
-            else: M_suffix = 'l2.M_5_50'
-            df_M_annot = pcgc_utils.load_dfs(args.annot, args.annot_chr, M_suffix, 'M', 'annot', header=None,use_tqdm=False)
-            M_annot = df_M_annot.sum(axis=0).values        
-
-        #load prodr2 files
+                
+    def load_prodr2(self, args):
         df_prodr2 = pcgc_utils.load_dfs(args.prodr2, args.prodr2_chr, 'prodr2', 'prodr2', 'prodr2', use_tqdm=False)
         df_prodr2.index.name = 'Category'        
         df_prodr2 = df_prodr2.groupby(by=['Category']).sum()
         assert df_prodr2.shape[0] == len(df_prodr2.columns.intersection(df_prodr2.index))
         df_prodr2 = df_prodr2.loc[df_prodr2.columns, df_prodr2.columns]
         assert (df_prodr2.columns == df_prodr2.index).all()
-        if df_prodr2.shape[1] == 1:
-            M_annot = M_annot[:1]
-        if M_annot.shape[0] != df_prodr2.shape[1]:
-            raise ValueError('M_annot files must have the same number of annotations as .prodr2 files')
-        
-        #restrict to only base annotation if requested
-        if args.no_annot:
-            df_prodr2 = df_prodr2.iloc[:1, :1]
-            M_annot = M_annot[:1]
-        
-        #load annotation files
-        if df_prodr2.shape[1] == 1:
-            df_annotations = None
-        else:
-            if args.annot is None and args.annot_chr is None:
-                raise ValueError('You must use --annot/--annot-chr if prodr2 files include more than one annotation')        
-            df_annotations = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'annot.gz', 'annot', 'annot', index_col='SNP')
-            df_annotations.drop(columns=['CHR', 'CM', 'BP'], inplace=True)
-            if not np.allclose(df_annotations.iloc[:,0], 1):
-                raise ValueError('The first annotation must be the base annotation (all SNPs must have value 1.0)')
-            if df_annotations.shape[1] != df_prodr2.shape[1]:
-                raise ValueError('Annotations and LD-score files have a different number of annotations')
-            if np.any(df_annotations.columns != df_prodr2.columns):
-                raise ValueError('Annotations and LD-score files have different annotation columns')
-            if args.not_M_5_50 and not np.allclose(M_annot, df_annotations.sum(axis=0)):
-                    raise ValueError('.M files and annotation files disagree on #SNPs')
-                
-        
-        category_names = df_prodr2.columns
-        return df_annotations, M_annot, df_prodr2.values, category_names
-        
 
-    def compute_taus(self, 
-                    annotations_sumstats_noneg,
-                    M_annot,
-                    min_annot,
-                    prodr2_table,    
-                    sumstats1, sumstats2,
-                    n1, n2,
-                    mean_Q1, mean_Q2,
-                    df_Gty1, df_Gty2,
-                    trace_ratios1, trace_ratios2,
-                    deflation_ratio1, deflation_ratio2,
-                    n_blocks,
-                    fit_intercept=False):
-                           
-        assert sumstats1.shape[0] == annotations_sumstats_noneg.shape[0]
-        assert sumstats2.shape[0] == annotations_sumstats_noneg.shape[0]
-        assert prodr2_table.shape[1] == annotations_sumstats_noneg.shape[1]                           
-                 
-        #compute PCGC constant factors
-        mean_Q1Q2 = mean_Q1*mean_Q2
-        deflation_ratio = np.sqrt(deflation_ratio1*deflation_ratio2)
+        if args.annot is None and args.annot_chr is None:
+            if df_prodr2.shape[1] > 1:
+                logging.warning('Using only the first annotation in prodr2 file!!!')
+                df_prodr2 = df_prodr2.iloc[:1,:1]
         
+        return df_prodr2
+        
+    
+    def load_all_snp_indices(self, args):
+        index_list = []
+    
+        if args.annot is not None or args.annot_chr is not None:
+            df_annot_index = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'annot.gz', 'annot', 'annot', index_col='SNP', usecols=['SNP'])
+            index_list.append(df_annot_index.index)
+        if args.fit_intercept:
+            df_l2_index = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'l2.ldscore.gz', 'l2.ldscore', 'annot', index_col='SNP', usecols=['SNP'])
+            index_list.append(df_l2_index.index)
+        if args.w_ld is not None or args.w_ld_chr is not None:
+            df_w_ld_index = pcgc_utils.load_dfs(args.w_ld, args.w_ld_chr, 'l2.ldscore.gz', 'l2.ldscore', 'w-ld', index_col='SNP', usecols=['SNP'])
+            index_list.append(df_w_ld_index.index)
+            
+        if len(index_list) == 0:
+            index_intersect = None
+        elif len(index_list) == 1:
+            index_intersect = index_list[0]
+        else:
+            index_intersect = reduce(lambda i1,i2: i1.intersection(i2), index_list)
+            
+        return index_intersect
+            
+
+    def compute_taus(self,
+                   args,
+                   o1, o2,
+                   df_annotations_sumstats_noneg,
+                   df_prodr2,
+                   df_sync,
+                   M_annot,
+                   df_l2, df_w_ld):
+
+
         #compute the inner product of Gty1, Gty2
-        if df_Gty1 is None or df_Gty2 is None or df_Gty1.shape[0] == 0:
+        df_Gty1 = o1.df_Gty
+        df_Gty2 = o2.df_Gty
+        intersect_columns = df_Gty1.columns.intersection(df_prodr2.columns)
+        if len(intersect_columns) == 0:
+            raise ValueError('Gty columns are different from the annotations names')
+        if len(intersect_columns) < df_Gty1.shape[1]:
+            if not np.all(df_prodr2.columns.isin(df_Gty1.columns)):
+                raise ValueError('Not all annotations have Gty values')
+            df_Gty1 = df_Gty1[df_prodr2.columns]
+            df_Gty2 = df_Gty2[df_prodr2.columns]
+        
+        trace_ratios1 = o1.trace_ratios
+        trace_ratios2 = o2.trace_ratios                
+        if df_Gty1 is None or df_Gty2 is None or df_Gty1.shape[0] == 0 or args.fit_intercept:
             Gty12 = 0        
         else:
             #intersect df_Gty1 and df_Gty2 if required
-            is_same = (df_Gty1.shape[0]==df_Gty2.shape[0]) \
+            is_same = (df_Gty1.shape[0] == df_Gty2.shape[0]) \
                     and (df_Gty1.index == df_Gty2.index).all()
             if not is_same:
                 index_intersect = df_Gty1.index.intersection(df_Gty2.index)
@@ -712,63 +715,96 @@ class SPCGC:
                 logging.info('%d individuals found in both Gty files'%(df_Gty1.shape[0]))
             Gty12 = np.einsum('ij,ij->j', df_Gty1.values, df_Gty2.values) * np.sqrt(trace_ratios1*trace_ratios2)
 
+        #fit intercept
+        n1 = o1.N
+        n2 = o2.N
+        N = np.sqrt(n1*n2)
+        sumstats1 = o1.df_sumstats['pcgc_sumstat'].values
+        sumstats2 = o2.df_sumstats['pcgc_sumstat'].values
+        if args.fit_intercept:
+            assert df_l2 is not None
+            assert df_w_ld is not None
+            chi2 = sumstats1 * sumstats2 * np.sqrt(trace_ratios1 * trace_ratios2) / N
+            
+            #LDSC weights (uses code adapted from LDSC)
+            hsq = ((chi2.mean()-1) * M_annot[0] / N) / df_l2.mean()
+            hsq = np.clip(hsq, 0, 1)
+            ld = np.fmax(df_l2.values, 1.0)
+            w_ld = np.fmax(df_w_ld.values, 1.0)
+            c = hsq * N / M_annot[0]
+            intercept_temp = 1.0
+            het_w = 1.0 / (2 * (intercept_temp + c*ld)**2)
+            oc_w = 1.0 / w_ld
+            w = np.sqrt(het_w * oc_w)
+            w /= w.sum()
+            
+            intercept_X = np.row_stack((df_l2.values, np.ones(len(sumstats1)))).T * w[:,np.newaxis]
+            intercept_Y = chi2 * w
+            #intercept_Y2 = (chi2-1) * w
+            intercept_XTX = intercept_X.T.dot(intercept_X)
+            intercept_XTY = intercept_Y.dot(intercept_X)
+            intercept = np.linalg.solve(intercept_XTX, intercept_XTY)[1] * N
+        else:
+            intercept = Gty12
+            
+            
         #compute quantities required for PCGC numerator
-        z1_anno = annotations_sumstats_noneg * sumstats1[:, np.newaxis] * np.sqrt(trace_ratios1)
-        z2_anno = annotations_sumstats_noneg * sumstats2[:, np.newaxis] * np.sqrt(trace_ratios2)
+        z1_anno = df_annotations_sumstats_noneg.values * sumstats1[:, np.newaxis] * np.sqrt(trace_ratios1)
+        z2_anno = df_annotations_sumstats_noneg.values * sumstats2[:, np.newaxis] * np.sqrt(trace_ratios2)
         z12 = np.einsum('ij,ij->j', z1_anno, z2_anno)
 
         #compute Z.T.dot(Y) (numer) and ZTZ (denom)        
-        M_annot_sumstats2 = np.einsum('ij,ij->j', annotations_sumstats_noneg, annotations_sumstats_noneg)
-        ZTZ = prodr2_table * \
+        M_annot_sumstats2 = np.einsum('ij,ij->j', df_annotations_sumstats_noneg, df_annotations_sumstats_noneg)
+        ZTZ = df_prodr2.values * \
             (np.outer(trace_ratios1,trace_ratios2)  /  np.outer(M_annot_sumstats2, M_annot_sumstats2))
-        ZTY = z12 / M_annot_sumstats2 - Gty12
+        # # # M_annot_noneg2 = df_sync['M2_noneg'].values if args.not_M_5_50 else df_sync['M2_5_50_noneg'].values
+        # # # ZTZ = df_prodr2.values * \
+            # # # (np.outer(trace_ratios1,trace_ratios2)  /  np.outer(M_annot_sumstats2, M_annot_noneg2)); print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+        ZTY = z12 / M_annot_sumstats2 - intercept
         
         #compute taus
-        intercept_factor = np.sqrt(n1 * n2 * mean_Q1 * mean_Q2)
-        intercept = self.pcgc_calc_intercept(ZTZ, ZTY, intercept_factor) if fit_intercept else 0
-        taus = np.linalg.solve(ZTZ, ZTY - intercept*intercept_factor)
+        taus = np.linalg.solve(ZTZ, ZTY)
                 
         #perform jackknife
-        separators = np.floor(np.linspace(0, len(z1_anno), n_blocks+1)).astype(int)
-        delete_values = np.empty((n_blocks, ZTY.shape[0]))
-        delete_intercepts = np.empty(n_blocks)
-        for block_i in xrange(n_blocks):
+        separators = np.floor(np.linspace(0, len(z1_anno), args.n_blocks+1)).astype(int)
+        delete_values = np.empty((args.n_blocks, ZTY.shape[0]))
+        delete_intercepts = np.empty(args.n_blocks)
+        for block_i in xrange(args.n_blocks):
             b_slice = slice(separators[block_i], separators[block_i+1])
-            b_M = np.einsum('ij,ij->j', annotations_sumstats_noneg[b_slice], annotations_sumstats_noneg[b_slice])
-            z12_noblock_i = z12 - np.einsum('ij,ij->j', z1_anno[b_slice,:], z2_anno[b_slice,:])            
-            ZTY_del = z12_noblock_i / (M_annot_sumstats2-b_M) - Gty12
-            intercept_del = self.pcgc_calc_intercept(ZTZ, ZTY_del, intercept_factor) if fit_intercept else 0
-            delete_values[block_i] = np.linalg.solve(ZTZ, ZTY_del - intercept*intercept_factor)                    
-            delete_intercepts[block_i] = intercept_del
+            b_M = np.einsum('ij,ij->j', df_annotations_sumstats_noneg.values[b_slice], df_annotations_sumstats_noneg.values[b_slice])
+            z12_noblock_i = z12 - np.einsum('ij,ij->j', z1_anno[b_slice,:], z2_anno[b_slice,:])
+            if args.fit_intercept:
+                intercept_X_block = intercept_X[b_slice]
+                intercept_Y_block = intercept_Y[b_slice]
+                intercept_XTX_del = intercept_XTX - intercept_X_block.T.dot(intercept_X_block)
+                intercept_XTY_del = intercept_XTY - intercept_Y_block.dot(intercept_X_block)
+                intercept_del = np.linalg.solve(intercept_XTX_del, intercept_XTY_del)[1] * N
+                delete_intercepts[block_i] = intercept_del
+            else:
+                intercept_del = intercept
+                delete_intercepts[block_i] = intercept[0]
+            ZTY_del = z12_noblock_i / (M_annot_sumstats2-b_M) - intercept_del
+            delete_values[block_i] = np.linalg.solve(ZTZ, ZTY_del)
         
         #multiply by h2_factor
-        h2_factor = 1.0 / (deflation_ratio * n1*n2 * mean_Q1Q2 * (M_annot - M_annot[0]*min_annot))
+        deflation_ratio1 = o1.deflation_ratio
+        deflation_ratio2 = o1.deflation_ratio
+        deflation_ratio = np.sqrt(deflation_ratio1*deflation_ratio2)
+        min_annot = df_sync['min_annot'].values
+        h2_factor = 1.0 / (deflation_ratio * n1*n2 * o1.mean_Q*o2.mean_Q * (M_annot - M_annot[0]*min_annot))
         taus *= h2_factor
         delete_values *= h2_factor
+        
+        #scale intercept
+        delete_intercepts /= N
+        if args.fit_intercept: intercept /= N            
+        else: intercept = intercept[0] / N
         
         #correct for annotations with negative numbers
         taus[0] -= taus[1:].dot(min_annot[1:])
         delete_values[:,0] -= np.einsum('ij,j->i', delete_values[:,1:], min_annot[1:])
         
-        #add 1.0 to intercept for consistency with LDSC definition
-        intercept += 1
-        delete_intercepts += 1        
-        
         return taus, delete_values, intercept, delete_intercepts
-    
-    
-    def pcgc_calc_intercept(self, ZTZ, ZTY, intercept_factor):        
-        opt_obj = optimize.minimize_scalar(self.pcgc_loss, args=(ZTZ, ZTY, intercept_factor), method='bounded', bounds=(-5,5))
-        if not opt_obj.success:
-            logging.warning('Intercept optimization failed with status=%d and message: %d'%(opt_obj.message.status, opt_obj.message))
-        return opt_obj.x
-    
-    def pcgc_loss(self, intercept, ZTZ, ZTY, intercept_factor):
-        ZTY_fixed = ZTY - intercept*intercept_factor
-        taus = np.linalg.solve(ZTZ, ZTY_fixed)
-        loss = taus.dot(ZTZ).dot(taus) - 2*taus.dot(ZTY_fixed)  #the loss function, up to some additive and multiplicative constant
-        return loss
-    
 
 
     
@@ -785,20 +821,21 @@ if __name__ == '__main__':
     parser.add_argument('--annot-chr', default=None, help='prefix for LDSC multi-chromosome annotation file')
     parser.add_argument('--prodr2', default=None, help='prefix for r^2 product files')
     parser.add_argument('--prodr2-chr', default=None, help='prefix for multi-chromosome prefix for r^2 product files')
-    parser.add_argument('--frqfile', default=None, help='name of MAFs file in plink format (not required if --not-M-5-50 is set)')
-    parser.add_argument('--frqfile-chr', default=None, help='name of MAFs file in multi-chromosome plink format (not required if --not-M-5-50 is set)')
     parser.add_argument('--chisq-max', default=None, help='SNPs with chi^2 values above this cutoff will not be considered')
     parser.add_argument('--n-blocks', default=200, type=int, help='number of jackknife blocks')
     parser.add_argument('--not-M-5-50', default=None, action='store_true', help='If set, all reference panel SNPs will be used to estimate h2 (including ones with MAF<0.05)')
     parser.add_argument('--keep-anno', default=None, help='optional comma-separated list of annotations to use')
     parser.add_argument('--remove-anno', default=None, help='optional comma-separated list of annotations to remove')
     
-    parser.add_argument('--M', default=None, type=float, help='Specify number of (common) SNPs in reference panel (not only SNPs with summary statistics). This flag can only be used when there are no annotations')
+    parser.add_argument('--M', default=None, type=int, help='Specify number of (common) SNPs in reference panel (not only SNPs with summary statistics). This flag can only be used when there are no annotations')
     
-    #parser.add_argument('--fit-intercept', default=False, action='store_true', help='fit an intercept (not recommended for PCGC)')
+    parser.add_argument('--fit-intercept', default=False, action='store_true', help='fit an intercept (not recommended for PCGC)')
+    parser.add_argument('--w-ld', default=None, help='LDSC weights file (only required if you want to fit an intercept)')
+    parser.add_argument('--w-ld-chr', default=None, help='LDSC weights file, in multi-chromosome format (only required if you want to fit an intercept)')
+    
+    
     parser.add_argument('--no-Gty', default=False, action='store_true', help='Tells PCGC to assume that there are no overlapping individuals (only relevant for genetic correlation estimation)')
     parser.add_argument('--he', default=False, action='store_true', help='Use HE instead of PCGC')
-    parser.add_argument('--no-annot', default=False, action='store_true', help='This will tell PCGC to use only the base annotation')
     parser.add_argument('--rg-annot', default=False, action='store_true', help='This will print out a per-annotation rg table for every pair of datasets')
     
     parser.add_argument('--print-delete-vals', default=False, action='store_true', help='This will print out the jackknife delete values (may be useful for downstream scripts)')
@@ -807,10 +844,7 @@ if __name__ == '__main__':
     
     #print splash screen
     splash_screen()
-    
-    # if args.fit_intercept:
-        # raise ValueError('--fit-intercept option is currently not supported')
-    
+        
     #check that the output directory exists
     if os.path.isabs(args.out) and not os.path.exists(os.path.dirname(args.out)):    
         raise ValueError('output directory %s doesn''t exist'%(os.path.dirname(args.out)))

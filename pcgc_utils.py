@@ -22,7 +22,10 @@ def configure_logger(out_prefix):
     logger.addHandler(fileHandler)
 
 
-def load_dfs(file_prefix, file_prefix_chr, file_suffix, arg_name, flag_name, join_axis=0, index_col=None, header='infer', use_tqdm=True):
+def load_dfs(file_prefix, file_prefix_chr, file_suffix, arg_name, flag_name, join_axis=0, index_col=None, header='infer', use_tqdm=True, usecols=None, index_intersect=None):
+
+    if index_col is None and index_intersect is not None:
+        raise ValueError('cannot use index_intersect without index_col')
 
     if file_prefix is not None:
         assert file_prefix_chr is None, 'cannot specify both --%s and --%s-chr'%(flag_name, flag_name)
@@ -40,25 +43,31 @@ def load_dfs(file_prefix, file_prefix_chr, file_suffix, arg_name, flag_name, joi
     #iterate over file prefixes
     df_outer_list = []
     for fh in fh_list:
-        df_fh_list = []
         if file_prefix is not None:
             flist = ['%s%s'%(fh, file_suffix)]
         else:
             flist = ['%s%d.%s'%(fh, chr_num, file_suffix) for chr_num in xrange(1,23)]
             
         #iterate over chromosomes
-        df_chr_list = []
+        df_allchr = []
         for fname in tqdm(flist, disable=(file_prefix is not None or (not use_tqdm))):
             if not os.path.exists(fname):
                 raise IOError('%s not found'%(fname))
-            df_chr = pd.read_table(fname, delim_whitespace=True, index_col=index_col, header=header)
-            df_chr_list.append(df_chr)
-            
-        if join_axis is None:
-            df = df_chr_list
-        else:
-            df = pd.concat(df_chr_list, axis=join_axis)
-        df_outer_list.append(df)                
+            df_chr = pd.read_table(fname, delim_whitespace=True, index_col=index_col, header=header, usecols=usecols)
+            if index_intersect is not None:
+                index_intersect_chr = df_chr.index.intersection(index_intersect)
+                if len(index_intersect_chr) == 0:
+                    continue
+                if len(index_intersect_chr) < df_chr.shape[0]:
+                    df_chr = df_chr.loc[index_intersect_chr]
+            if join_axis is None:
+                df_allchr.append(df_chr)
+            else:
+                if len(df_allchr) == 0:
+                    df_allchr = df_chr
+                else:
+                    df_allchr = pd.concat((df_allchr, df_chr), axis=join_axis)
+        df_outer_list.append(df_allchr)                
             
     #return output
     if len(df_outer_list) == 1: return df_outer_list[0]        

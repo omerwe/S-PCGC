@@ -26,26 +26,29 @@ def compute_r2_prod(args):
         category_names = df_annotations.columns
         if args.sync is None:
             raise ValueError('--annot must be used together with --sync')        
-        df_sync = pd.read_table(args.sync+'sync', header=None, delim_whitespace=True, index_col=0, squeeze=True)        
+        df_sync = pd.read_table(args.sync+'sync', index_col='Category')
         if df_sync.shape[0] != len(category_names) or not np.all(df_sync.index == category_names):
             raise ValueError('Annotations in sync file do not match those in annotations/prodr2 files')
-        min_annot = df_sync.values
+        min_annot = df_sync['min_annot'].values
         df_annotations -= min_annot
         
     #mark which SNPs to keep
-    if args.exclude is None and args.extract is None:
+    is_good_snp = np.ones(len(snpnames), dtype=np.bool)
+    if args.exclude is not None:
+        df_exclude = pd.read_table(args.exclude, squeeze=True, header=None)
+        is_good_snp = is_good_snp & (~snpnames.isin(df_exclude))
+        logging.info('Excluding %d SNPs'%(np.sum(~snpnames.isin(df_exclude))))
+    if args.extract is not None:
+        df_extract = pd.read_table(args.extract, squeeze=True, header=None)
+        is_good_snp = is_good_snp & (snpnames.isin(df_extract))
+        logging.info('Extracting %d SNPs'%(np.sum(snpnames.isin(df_extract))))
+        
+    if args.ld_all:
         keep_snps = None
+        is_r2_snp = is_good_snp
     else:
-        is_good_snp = np.ones(len(snpnames), dtype=np.bool)
-        if args.exclude is not None:
-            df_exclude = pd.read_table(args.exclude, squeeze=True, header=None)
-            is_good_snp = is_good_snp & (~snpnames.isin(df_exclude))
-            logging.info('Excluding %d SNPs'%(np.sum(~snpnames.isin(df_exclude))))
-        if args.extract is not None:
-            df_extract = pd.read_table(args.extract, squeeze=True, header=None)
-            is_good_snp = is_good_snp & (snpnames.isin(df_extract))
-            logging.info('Extracting %d SNPs'%(np.sum(snpnames.isin(df_extract))))
         keep_snps = np.where(is_good_snp)[0]
+        is_r2_snp = np.ones(len(keep_snps), dtype=np.bool)
         snpnames = snpnames.iloc[keep_snps]
     
     #keep only annotations of SNPs in plink file
@@ -65,7 +68,7 @@ def compute_r2_prod(args):
     mafMin = None
     reload(ldscore_r2)
     logging.info('Loading SNP file...')
-    geno_array = ldscore_r2.PlinkBEDFile(args.bfile+'.bed', n, array_snps, keep_snps=keep_snps,
+    geno_array = ldscore_r2.PlinkBEDFile(args.bfile+'.bed', n, array_snps, is_r2_snp, keep_snps=keep_snps,
         keep_indivs=keep_indivs, mafMin=mafMin)
         
     #compute r2_prod_table
@@ -98,6 +101,8 @@ if __name__ == '__main__':
     parser.add_argument('--out', required=True, help='output file prefix')
     parser.add_argument('--ld-wind-cm', type=float, default=1.0, help='window size to be used for estimating r2 products in units of centiMorgans (cM).')
     parser.add_argument('--chunk-size',  type=int, default=50, help='chunk size for r2 product calculation')
+    
+    parser.add_argument('--ld-all',  default=False, action='store_true', help='If this is set, the script will compute sum of r^2 between extracted SNPs and all SNPs')
     args = parser.parse_args()
     
     #check that the output directory exists
