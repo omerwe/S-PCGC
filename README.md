@@ -222,7 +222,7 @@ To gain more intuition about case-control studies, you may wish to look at the G
 
 7. We highly recommend that you provide external estimates of SNP frequencies to pcgc_sumstats_creator.py via the flag `--frqfile`, based on a reference panel. This can prevent bias arising due to the fact that cases are over-enriched in case-control studies, which could bias the MAF estimates and the heritability estimates.
 
-8. S-PCGC can handle huge datasets by loading only small subsets of the data at each time, using the [pandas-plink](https://github.com/limix/pandas-plink) package. The script `pcgc_sumstats_creator.py` has a parameter called `--chunk-size` which controls the total number of SNPs that can be loaded into memory at once (accounting for sample size). The default value is 50M, but you may wish to tweak this value depending on your machine's capabilities.
+8. S-PCGC can handle huge datasets by loading only small subsets of the data at each time, using the [pandas-plink](https://github.com/limix/pandas-plink) package. The script `pcgc_sumstats_creator.py` has a parameter called `--chunk-size` which controls the number of SNPs that can be loaded into memory at once. The default value is (50M divided by sample size), but you may wish to tweak this value based on your machine's capabilities.
 
 
 
