@@ -5,7 +5,7 @@ import time
 import sys
 import logging
 import pcgc_utils
-
+from tqdm import tqdm
 
 
 
@@ -15,7 +15,7 @@ def collect_annotations_chr_info(annot_file, df_frq=None, min_annot=None):
     
     #compute sync df
     df_sync = pd.DataFrame(index=df_annot.columns)
-    df_sync['min_annot'] = df_annot.min(axis=0).values
+    df_sync['min_annot'] = np.minimum(df_annot.min(axis=0).values, 0)
     
     #in the first round, we only collect min_annot...
     if min_annot is None:
@@ -32,7 +32,7 @@ def collect_annotations_chr_info(annot_file, df_frq=None, min_annot=None):
     df_annot += min_annot
     
     #align df_annot and df_frq
-    if not (df_frq.index.isin(df_annot.index)).all():
+    if not (df_annot.index.isin(df_frq.index)).all():
         raise ValueError('Not all SNPs in the annotations file have MAFs')
     is_same = (df_annot.shape[0] == df_frq.shape[0]) and (df_annot.index == df_frq.index).all()
     if not is_same:
@@ -55,7 +55,7 @@ def collect_annotations_chr_info(annot_file, df_frq=None, min_annot=None):
     return df_sync, df_overlap, df_overlap_common
 
 
-def collect_annotations_info(args):
+def pcgc_sync2(args):
     
     #define the list of annotation file names
     if args.annot is None and args.annot_chr is None:
@@ -68,9 +68,10 @@ def collect_annotations_info(args):
         annot_fname_list = [args.annot_chr+'%d.annot.gz'%(chr_num) for chr_num in xrange(1,23)]
     
     #round 1: Collect min_annot fields
+    logging.info('Computing annotation minimum values')
     min_annot_list = []
-    for annot_fname in tqdm(fname_list, disable=len(fname_list)==1):
-        min_annot_list.append(collect_annotations_chr_info(annot_fname))
+    for annot_fname in tqdm(annot_fname_list, disable=len(annot_fname_list)==1):
+        min_annot_list.append(collect_annotations_chr_info(annot_fname).values[:,0])
         
     #compute min_annot across all annotations
     min_annot = np.min(np.array(min_annot_list), axis=0)
@@ -84,8 +85,9 @@ def collect_annotations_info(args):
     overlap_matrix = 0
     overlap_matrix_common = 0
     df_sync_list = []
-    for annot_fname in fname_list:
-        df_sync, df_overlap, df_overlap_common
+    logging.info('Collecting annotation details')
+    for annot_fname in tqdm(annot_fname_list, disable=len(annot_fname_list)==1):
+        df_sync, df_overlap, df_overlap_common = collect_annotations_chr_info(annot_fname, df_frq, min_annot)
         df_sync_list.append(df_sync)
         overlap_matrix += df_overlap.values
         overlap_matrix_common += df_overlap_common.values
@@ -108,59 +110,14 @@ def collect_annotations_info(args):
     func_dict['M2_5_50_noneg'] = np.sum    
     assert np.all([c in func_dict for c in df_sync.columns])    
     df_sync_concat = pd.concat(df_sync_list, axis=0)
-    df_sync = df_sync_concat.groupby(func_dict)
-    
-    return df_sync, df_overlap, df_overlap_common
-    
+    df_sync = df_sync_concat.groupby(df_sync_concat.index).agg(func_dict)
+    df_sync = df_sync.loc[df_sync_list[0].index]
 
-def pcgc_sync(args):
-
-    #read annotations file
-    df_annotations = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'annot.gz', 'annot', 'annot', join_axis=0, index_col='SNP')
-    df_annotations.drop(columns=['CHR', 'CM', 'BP'], inplace=True)
-    
-    #read MAFs file
-    df_frq = pcgc_utils.load_dfs(args.frqfile, args.frqfile_chr, 'frq', 'frq', 'frqfile', join_axis=0, index_col='SNP', usecols=['SNP', 'MAF'])
-    df_frq = df_frq['MAF']
-    
-    #sync annotations and MAFs file
-    if not (df_frq.index.isin(df_annotations.index)).all():
-        raise ValueError('Not all SNPs in the annotations file have MAFs')
-    is_same = (df_annotations.shape[0] == df_frq.shape[0]) and (df_annotations.index == df_frq.index).all()
-    if not is_same:
-        df_frq = df_frq.loc[df_annotations.index]
-        assert (df_annotations.index == df_frq.index).all()
-        
-    #create annotations of common SNPs
-    is_common = (df_frq>=0.05) & (df_frq <= 0.95)
-    df_annotations_common = df_annotations[is_common]
-    
-    #create overlap matrices
-    df_overlap = df_annotations.T.dot(df_annotations)
-    df_overlap_common = df_annotations_common.T.dot(df_annotations_common)
-    
-    #compute min_annot
-    min_annot = df_annotations.min(axis=0).values
-    min_annot[min_annot>0]=0
-        
-    #create df_sync
-    df_sync = pd.DataFrame(index=df_annotations.columns)
-    df_sync['min_annot'] = min_annot
-    df_sync['is_continuous'] = [(len(np.unique(df_annotations[c])) > 2) for c in df_annotations.columns]
-    df_sync['M'] = df_annotations.sum(axis=0)
-    df_sync['M_5_50'] = df_annotations_common.sum(axis=0)
-    df_sync['M2'] = np.einsum('ij,ij->j',df_annotations, df_annotations)
-    df_sync['M2_5_50'] = np.einsum('ij,ij->j',df_annotations_common, df_annotations_common)
-    
-    #create fields for non-negative annotations
-    df_annotations -= min_annot
-    df_annotations_common -= min_annot
-    df_sync['M_noneg'] = df_annotations.sum(axis=0)
-    df_sync['M_5_50_noneg'] = df_annotations_common.sum(axis=0)
-    df_sync['M2_noneg'] = np.einsum('ij,ij->j',df_annotations, df_annotations)
-    df_sync['M2_5_50_noneg'] = np.einsum('ij,ij->j',df_annotations_common, df_annotations_common)
-    
+    #add df index names
     df_sync.index.name = 'Category'
+    df_overlap.index.name = 'Category'
+    df_overlap_common.index.name = 'Category'
+    
     return df_sync, df_overlap, df_overlap_common
     
 if __name__ == '__main__':
@@ -180,10 +137,10 @@ if __name__ == '__main__':
         
     pcgc_utils.configure_logger(args.out)
     
-    df_sync, df_overlap, df_overlap_common = pcgc_sync(args)
-    df_sync.to_csv(args.out+'.sync', sep='\t', float_format='%0.10e')
-    df_overlap.to_csv(args.out+'.overlap', sep='\t', float_format='%0.10e')
-    df_overlap_common.to_csv(args.out+'.overlap_5_50', sep='\t', float_format='%0.10e')
+    df_sync, df_overlap, df_overlap_common = pcgc_sync2(args)
+    df_sync.to_csv(args.out+'.sync', sep='\t')
+    df_overlap.to_csv(args.out+'.overlap', sep='\t')
+    df_overlap_common.to_csv(args.out+'.overlap_5_50', sep='\t')
     
     
     
