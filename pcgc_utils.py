@@ -67,6 +67,12 @@ def load_dfs(file_prefix, file_prefix_chr, file_suffix, arg_name, flag_name, joi
                     df_allchr = df_chr
                 else:
                     df_allchr = pd.concat((df_allchr, df_chr), axis=join_axis)
+                    
+        #make sure the df is ordered correctly
+        if index_intersect is not None and join_axis is not None:
+            assert df_allchr.shape[0] == len(index_intersect)
+            df_allchr = df_allchr.loc[index_intersect]
+                    
         df_outer_list.append(df_allchr)                
             
     #return output
