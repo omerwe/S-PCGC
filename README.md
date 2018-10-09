@@ -1,11 +1,11 @@
 # S-PCGC
-Heritability, genetic correlation and functional enrichment estimation for case-control studies
+Heritability, genetic correlation and functional enrichment estimation for case-control studies.
 
 S-PCGC is an adaptation of stratified LD score regression [(S-LDSC)](https://www.nature.com/articles/ng.3404) for case-control studies. Like S-LDSC, S-PCGC can estimate genetic heritability, genetic correlation and functional enrichment. However, S-PCGC is explicitly designed for case-control studies rather than quantitative phenotypes. This can make a large differnce, especially in the presence of strong non-genetic risk factors. Parts of the S-PCGC code are adapted from S-LDSC with permission.
 
 The main features of S-PCGC are:
 1. **S-PCGC is designed for case-control studies**. Such studies include many subtleties not accounted for by methods designed for quantitative phenotypes like S-LDSC.
-2. **Seamless integration with S-LDSC format**. S-PCGC accepts the same input files and outputs the same output files as S-LDSC.
+2. **Seamless integration with S-LDSC format**. S-PCGC accepts the same input and creates the same output files as S-LDSC.
 3. **Computational efficiency**. S-PCGC can analyze datasets with hundreds of thousands of individuals and dozens of functional annotations in a few hours.
 
 S-PCGC is described in the following paper:
@@ -34,7 +34,7 @@ After downloading, we recommend checking that everything is ok by typing ```pyth
 
 <br><br>
 # Usage overview
-S-PCGC carries performs a case-control analysis in four stages:
+S-PCGC performs a case-control analysis in four stages:
 1. **Generate a sync file for your annotations**. This is a very simple offline step that only needs to be run once. It only gathers some information about the annotations (e.g., the minimum value of each annotation across all SNPs).
 2. **Estimate the cross-product of r^2 values across all pairs of functional annotations, via a reference panel such as 1000 genomes**. This step is similar to LD-score computation.
 3. **Generate summary statistics**. These are specialized summary statistics explicitly designed for S-PCGC (unlike standard summary statistics analyzed by S-LDSC).
@@ -107,12 +107,12 @@ cat temp_results/results.s2.results | column -t
 2. The `.results` files have the exact same format as S-LDSC output files.
 3. The `.output` results show both marginal and conditional heritability (please see details below).
 4. The flag ```--sumstats``` can accept any number of comma-separated files.
-5. In this example we ran `pcgc_r2.py` on the entire genome. In real data analysis it may be easier to run `pcgc_r2.py` on each chromosome separately, and then use the flag `--prodr2-chr` when calling `pcgc_main.py`
+5. In this example we ran `pcgc_r2.py` and `pcgc_sumstats_creator.py` on the entire genome. In real data analysis it may be easier to run these scripts on each chromosome separately, and then use the flag `--prodr2-chr`, `--sumstats-chr` when calling `pcgc_main.py`
 6. S-PCGC supports many more options than shown here. For a full list and explanations, please type ```python <file_name> --help```
 
 
 # An example with real annotations
-The following example uses simulated genotypes and real functional annotations from the Baseline-LD [(Baseline-LD)](https://www.nature.com/articles/ng.3954) model. In this example, we will use a 'representative set of genotyped or well-imputed SNPs' stored in the file example/good_snps.txt.
+The following example uses simulated genotypes and real functional annotations from the [Baseline-LD model](https://www.nature.com/articles/ng.3954). In this example, we will use a 'representative set of genotyped or well-imputed SNPs' stored in the file example/good_snps.txt. (generally, 'good SNPs' should be genotyped or well-imputed SNPs (e.g. INFO score >0.9) that passed QC and are not in the MHC region --- see details below).
 To run this example, you need a directory called `1000G` that contains plink files of European individuals from the 1000 genomes reference panel (one file per chromosome; see download instructions below). You can create a symbolic link to this directory from your working directory with the command `ln -s <path_to_1000G> 1000G`.
 ```
 #download and uncompress the Baseline-LD (v2) annotations
@@ -133,7 +133,7 @@ do
     --out baselineLD_v2.0/baselineLD.goodSNPs.${i} 
 done
 
-#Compute 1000G MAFs
+#Compute 1000G MAFs (please change ~/plink/plink to the local path of your plink executable)
 for i in {1..22};
 do
     ~/plink/plink \
@@ -206,15 +206,17 @@ To gain more intuition about case-control studies, you may wish to look at the G
 # Important notes
 1. `pcgc_r2.py` must use **exactly** the same SNPs as `pcgc_sumstats_creator.py`. If you use `--extract` in one of them, you must use it in the other as well.
 
-2. Overlapping individuals (shared between the two studies) will not be automatically detected. Please make sure that overlapping individuals are clearly marked in the plink files by having exactly the same family id and individual id.
+2. The set of SNPs with summary statistics (as in `good_snps.txt` in the example above) should ideally be a set of genotyped or well-imputed SNPs (e.g. INFO score > 0.9) that passed QC. It is highly recommended to also exclude the MHC region (chromosome 6 28M-32M) from these SNPs. One reasonable choice of SNPs is the set of HapMap3 SNPs (which you can download [here](https://data.broadinstitute.org/alkesgroup/LDSCORE/w_hm3.snplist.bz2)), as these SNPs are typically genotyped or well-imputed. However, please make sure to also exclude SNPs within the MHC region.
 
-3. To account for population stratification, it is not enough to simple include principal components as covariates as is typically done. Instead, you need to invoke ```pcgc_sumstats_creator.py``` with the flags ```--covars-regress``` and ```--pve``` (please see the detailed explanation above).
+3. Overlapping individuals (shared between the two studies) will not be automatically detected. Please make sure that overlapping individuals are clearly marked in the plink files by having exactly the same family id and individual id.
 
-4. The code assumes that the first annotation is always a base annotation that simply assigns 1.0 to all SNPs. Please adhere to this convention!
+4. To account for population stratification, it is not enough to simple include principal components as covariates as is typically done. Instead, you need to invoke ```pcgc_sumstats_creator.py``` with the flags ```--covars-regress``` and ```--pve``` (please see the detailed explanation above).
 
-5. The .output files report two numbers: marginal and conditional heritability. The difference is that conditional heritability conditions on the covariates in the study, meaning that it ignores the variance introduced by the covariates. Most studies report conditional heritability, but we believe that the marginal heritability is more informative. For details, please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952).
+5. The code assumes that the first annotation is always a base annotation that simply assigns 1.0 to all SNPs. Please adhere to this convention!
 
-6. We highly recommend that you provide external estimates of SNP frequencies to pcgc_sumstats_creator.py via the flag `--frqfile`, based on a reference panel. This can prevent bias arising due to the fact that cases are over-enriched in case-control studies, which could bias the MAF estimates and the heritability estimates.
+6. The .output files report two numbers: marginal and conditional heritability. The difference is that conditional heritability conditions on the covariates in the study, meaning that it ignores the variance introduced by the covariates. Most studies report conditional heritability, but we believe that the marginal heritability is more informative. For details, please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952).
+
+7. We highly recommend that you provide external estimates of SNP frequencies to pcgc_sumstats_creator.py via the flag `--frqfile`, based on a reference panel. This can prevent bias arising due to the fact that cases are over-enriched in case-control studies, which could bias the MAF estimates and the heritability estimates.
 
 
 
@@ -230,7 +232,10 @@ Q: Is it safe to make the summary statistics files publicly available?<br>
 A: Absolutely! These summary statistics don't expose any individual-level data. You may see that some of the output files include individual ids, but this is only intended to help identify overlapping individuals. The only information included about these individuals is (a) the noise in the estimation of their kinship with themselves (which should be 1.0 in expectation), and (b) the noise multiplied by their phenotype value. These fields are required to obtain accurate heritability/rg estimates (please see the [PCGC-s paper](https://www.sciencedirect.com/science/article/pii/S0002929718301952) for details)
 
 Q: Should I include imputed SNPs in the summary statistics?<br>
-A: Not necessarily. The set of SNPs with summary statistics should be a representative set of common SNPs, correspond to the "regression SNPs" of S-LDSC. We recommend using a set of reliable common SNPs that are either genotyped or well-imputed, such as HapMap3 SNPs. We also recommend excluding SNPs within the MHC (chromosome 6 28M-32M) from all analyses, as done by S-LDSC and other tools.
+A: Not necessarily. The set of SNPs with summary statistics should be a representative set of common SNPs, correspond to the "regression SNPs" of S-LDSC. We recommend using a set of reliable common SNPs that are either genotyped or well-imputed, such as HapMap3 SNPs (which you can download [here](https://data.broadinstitute.org/alkesgroup/LDSCORE/w_hm3.snplist.bz2)). We also recommend excluding SNPs within the MHC (chromosome 6 28M-32M) from all analyses, as done by S-LDSC and other tools.
+
+Q: Can I use my case-control data for `pcgc_r2.py` instead of a reference panel?<br>
+A: Yes, but this has two caveats: (1) the analysis will be slower with larger data, and (2) for genetic correlation, it makes more sense to use an external reference panel instead of arbitrarily choosing one of the two studies. If you only care about heritability, there's no need for a reference panel. In this case, we suggest that you downsample your data to ~5000 individuals and only run `pcgc_r2.py` on this subset for greater speed.
 
 Q: Can I use standard (publicly available) summary statistics instead of having to create my own summary statistics?<br>
 A: Unfortunately no. To obtain unbiased estimates, S-PCGC must uses specialized summary statistics.
@@ -241,20 +246,23 @@ A: No.
 Q: Does S-PCGC recognize categorical covariates?<br>
 A: No (though we might add this in the future). Please transform all your categorical covariates into a series of binary dummy variables.
 
-Q: Can pcgc_sumstats_createor use bgen files instead of plink files?<br>
+Q: Can `pcgc_sumstats_creator.py` use bgen files instead of plink files?<br>
 A: Currently no.
 
 Q: Can my data include two studies with overlapping individuals?<br>
 A: Yes, as long as such individuals are clearly marked in the plink files by having exactly the same family id and individual id. Otherwise, you might get severely biased results.
 
-Q: Can I compute the rg for each annotation separately?<br>
-A: Yes, by using the flag `--rg-annot`. This will create a separate .rg file for every pair of studies. However, please note that the results may be nonsensical for continuous annotations, because they can explain a negative amount of heritability.
+Q: Can I estimate rg for each annotation?<br>
+A: Yes, by using the flag `--rg-annot`. This will create a separate .rg file for every pair of studies with the per-annotation rg estimates. However, please note that the results may be nonsensical for continuous annotations, because they can explain a negative amount of heritability.
 
 Q: Can S-PCGC estimate heritability directly from raw genotypes, without using summary statistics?<br>
 A: No. In our experience using summary statistics is preferable, because it allows extremely fast performance at a negligible loss of accuracy. However, if you want an exact PCGC implementation, we recommend trying out [LDAK](http://dougspeed.com/pcgc-regression/). Note that the LDAK implementation is limited to less than 100,000 individuals and 20 annotations.
 
-Q: Can S-PCGC fit an intercept like LDSC?
-A: No. There's no need for an intercept when the summary statistics are created `pcgc_sumstats_creator.py`, because the intercept is then already known.
+Q: Can I include LDAK weights?<br>
+A: Yes - you can just include them as an S-LDSC annotation. If you want to combine these weights with S-LDSC annotations, we recommend creating joint annotations as described in [Gazal et al. 2018 bioRxiv](https://www.biorxiv.org/content/early/2018/01/30/256412).
+
+Q: Can S-PCGC fit an intercept like LDSC?<br>
+A: No. There's no need to estimate an intercept when the summary statistics are created with `pcgc_sumstats_creator.py`, because the intercept is already known.
 
 <br><br>
 -----------------
