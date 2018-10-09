@@ -50,7 +50,10 @@ The following is a simple end-to-end S-PCGC analysis, which can run in ~2 minute
 mkdir temp_results
 
 #create a sync file (a one-time offline operation)
-python pcgc_sync.py --annot-chr example/model. --out temp_results/model
+python pcgc_sync.py \
+--annot-chr example/model. \
+--frqfile-chr example/model. \
+--out temp_results/model
 
 #Compute cross-r^2 between functional annotations
 python pcgc_r2.py \
@@ -75,7 +78,6 @@ python pcgc_sumstats_creator.py \
 --bfile example/s2 \
 --pheno example/s2.phe \
 --covar example/s2.cov \
---frqfile-chr example/model. \
 --annot-chr example/model. \
 --sync temp_results/model. \
 --prev 0.01 \
@@ -120,7 +122,10 @@ wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_
 tar -xzvf 1000G_Phase3_baselineLD_v2.0_ldscores.tgz
 
 #run pcgc_sync.py to collect annotations details
-python pcgc_sync.py --annot-chr baselineLD_v2.0/baselineLD. --out baselineLD_v2.0/baselineLD
+python pcgc_sync.py \
+--annot-chr baselineLD_v2.0/baselineLD. \
+--frqfile-chr 1000G/1000G.EUR.QC. \
+--out baselineLD_v2.0/baselineLD
 
 #run pcgc_r2.py on each chromosome file, using the set of 'good SNPs'
 for i in {1..22};
@@ -154,7 +159,6 @@ do
     --annot baselineLD_v2.0/baselineLD.${i}. \
     --sync baselineLD_v2.0/baselineLD. \
     --prev 0.01 \
-    --frqfile 1000G/1000G.EUR.QC.${i}. \
     --out s1_sumstats/s1_chr${i}
 done
 
