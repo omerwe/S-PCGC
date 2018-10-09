@@ -157,6 +157,7 @@ do
     --pheno example/s1.phe \
     --covar example/s1.cov \
     --annot baselineLD_v2.0/baselineLD.${i}. \
+    --frqfile 1000G/1000G.EUR.QC.${i}. \
     --sync baselineLD_v2.0/baselineLD. \
     --prev 0.01 \
     --out s1_sumstats/s1_chr${i}
@@ -166,7 +167,6 @@ done
 python pcgc_main.py \
 --annot-chr baselineLD_v2.0/baselineLD. \
 --sync baselineLD_v2.0/baselineLD. \
---frqfile-chr 1000G/1000G.EUR.QC. \
 --sumstats-chr s1_sumstats/s1_chr \
 --prodr2-chr baselineLD_v2.0/baselineLD.goodSNPs. \
 --out s1_sumstats/pcgc
