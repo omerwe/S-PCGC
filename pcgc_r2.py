@@ -80,7 +80,7 @@ def compute_r2_prod(args):
         raise ValueError(error_msg)
     t0 = time.time()
     geno_array._currentSNP = 0
-    r2prod_table = geno_array.ldScoreVarBlocks(block_left, args.chunk_size, annot=df_annotations.values)
+    r2prod_table = geno_array.ldScoreVarBlocks(block_left, args.chunk_size, annot=df_annotations.values.take(geno_array.kept_snps).reshape((len(geno_array.kept_snps), 1)))
     
     df_r2prod_table = pd.DataFrame(r2prod_table, index=df_annotations.columns, columns=df_annotations.columns)
     return df_r2prod_table
