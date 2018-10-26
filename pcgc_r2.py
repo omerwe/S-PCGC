@@ -70,6 +70,7 @@ def compute_r2_prod(args):
     logging.info('Loading SNP file...')
     geno_array = ldscore_r2.PlinkBEDFile(args.bfile+'.bed', n, array_snps, is_r2_snp, keep_snps=keep_snps,
         keep_indivs=keep_indivs, mafMin=mafMin)
+    df_annotations = df_annotations.iloc[geno_array.kept_snps]
         
     #compute r2_prod_table
     logging.info('Computing r2 prod...')
@@ -80,7 +81,7 @@ def compute_r2_prod(args):
         raise ValueError(error_msg)
     t0 = time.time()
     geno_array._currentSNP = 0
-    r2prod_table = geno_array.ldScoreVarBlocks(block_left, args.chunk_size, annot=df_annotations.values.take(geno_array.kept_snps).reshape((len(geno_array.kept_snps), 1)))
+    r2prod_table = geno_array.ldScoreVarBlocks(block_left, args.chunk_size, annot=df_annotations.values)
     
     df_r2prod_table = pd.DataFrame(r2prod_table, index=df_annotations.columns, columns=df_annotations.columns)
     return df_r2prod_table
