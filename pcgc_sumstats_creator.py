@@ -283,7 +283,7 @@ class PCGC_Sumstats:
         
         #read SNPs from bfile/bgen file
         if self.genetic_format == 'plink':            
-            X = self.bfile['bed'][:, snp1:snp2].compute()
+            X = self.bfile['bed'][:, snp1:snp2].compute().astype(np.float)
         elif self.genetic_format == 'bgen':
             raise NotImplementedError('bgen functionality not yet implemented')
         else:
