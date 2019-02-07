@@ -156,19 +156,19 @@ do
     --extract example/good_snps.txt \
     --pheno example/s1.phe \
     --covar example/s1.cov \
-    --annot baselineLD_v2.0/baselineLD.${i}. \
+    --annot baselineLD_v2.1/baselineLD.${i}. \
     --frqfile 1000G/1000G.EUR.QC.${i}. \
-    --sync baselineLD_v2.0/baselineLD. \
+    --sync baselineLD_v2.1/baselineLD. \
     --prev 0.01 \
     --out s1_sumstats/s1_chr${i}
 done
 
 #estimate heritability and functional enrichment
 python pcgc_main.py \
---annot-chr baselineLD_v2.0/baselineLD. \
---sync baselineLD_v2.0/baselineLD. \
+--annot-chr baselineLD_v2.1/baselineLD. \
+--sync baselineLD_v2.1/baselineLD. \
 --sumstats-chr s1_sumstats/s1_chr \
---prodr2-chr baselineLD_v2.0/baselineLD.goodSNPs. \
+--prodr2-chr baselineLD_v2.1/baselineLD.goodSNPs. \
 --out s1_sumstats/pcgc
 
 #view heritabiltiy estimates
