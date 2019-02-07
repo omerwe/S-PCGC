@@ -118,24 +118,24 @@ The following example uses simulated genotypes and real functional annotations f
 To run this example, you need a directory called `1000G` that contains plink files of European individuals from the 1000 genomes reference panel (one file per chromosome; see download instructions below). You can create a symbolic link to this directory from your working directory with the command `ln -s <path_to_1000G> 1000G`.
 ```
 #download and uncompress the Baseline-LD (v2) annotations
-wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.0_ldscores.tgz
-tar -xzvf 1000G_Phase3_baselineLD_v2.0_ldscores.tgz
+wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.1_ldscores.tgz
+tar -xzvf 1000G_Phase3_baselineLD_v2.1_ldscores.tgz
 
 #run pcgc_sync.py to collect annotations details
 python pcgc_sync.py \
---annot-chr baselineLD_v2.0/baselineLD. \
+--annot-chr baselineLD_v2.1/baselineLD. \
 --frqfile-chr 1000G/1000G.EUR.QC. \
---out baselineLD_v2.0/baselineLD
+--out baselineLD_v2.1/baselineLD
 
 #run pcgc_r2.py on each chromosome file, using the set of 'good SNPs'
 for i in {1..22};
 do
     python pcgc_r2.py \
-    --annot baselineLD_v2.0/baselineLD.${i}. \
-    --sync baselineLD_v2.0/baselineLD. \
+    --annot baselineLD_v2.1/baselineLD.${i}. \
+    --sync baselineLD_v2.1/baselineLD. \
     --bfile 1000G/1000G.EUR.QC.${i} \
     --extract example/good_snps.txt \
-    --out baselineLD_v2.0/baselineLD.goodSNPs.${i} 
+    --out baselineLD_v2.1/baselineLD.goodSNPs.${i} 
 done
 
 #Compute 1000G MAFs (please change ~/plink/plink to the local path of your plink executable)
@@ -187,9 +187,9 @@ cat s1_sumstats/pcgc.s1_chr.results | column -t
 ## Obtaining reference panel and annotation files
 
 S-PCGC is fully compatible with the S-LDSC input format. It requires two pieces of information also used by S-LDSC:
-1. Functional annotation files. We recommend using the Baseline-LD 2.0 model [(Gazal et al. 2017)](https://www.nature.com/articles/ng.3954). You can download it by typing:
+1. Functional annotation files. We recommend using the Baseline-LD 2.1 model [(Gazal et al. 2017)](https://www.nature.com/articles/ng.3954). You can download it by typing:
 ```
-wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.0_ldscores.tgz
+wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.1_ldscores.tgz
 ```
 2. A reference panel (required to compute cross-product of r^2 values). We recommend using 1000 genomes data from a relevant population. For example, you can download 1000G data from [the 1000 Genomes FTP site](https://bit.ly/2OyfNaL) and then convert it to plink format using the [`plink --vcf`](https://www.cog-genomics.org/plink2/input#vcf) command.
 
