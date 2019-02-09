@@ -121,6 +121,15 @@ To run this example, you need a directory called `1000G` that contains plink fil
 wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.1_ldscores.tgz
 tar -xzvf 1000G_Phase3_baselineLD_v2.1_ldscores.tgz
 
+#Compute 1000G MAFs (please change ~/plink/plink to the local path of your plink executable)
+for i in {1..22};
+do
+    ~/plink/plink \
+    --bfile 1000G/1000G.EUR.QC.${i} \
+    --freq \
+    --out 1000G/1000G.EUR.QC.${i}
+done
+
 #run pcgc_sync.py to collect annotations details
 python pcgc_sync.py \
 --annot-chr baselineLD_v2.1/baselineLD. \
@@ -136,15 +145,6 @@ do
     --bfile 1000G/1000G.EUR.QC.${i} \
     --extract example/good_snps.txt \
     --out baselineLD_v2.1/baselineLD.goodSNPs.${i} 
-done
-
-#Compute 1000G MAFs (please change ~/plink/plink to the local path of your plink executable)
-for i in {1..22};
-do
-    ~/plink/plink \
-    --bfile 1000G/1000G.EUR.QC.${i} \
-    --freq \
-    --out 1000G/1000G.EUR.QC.${i}
 done
 
 #Create summary statistics
