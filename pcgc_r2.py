@@ -70,7 +70,8 @@ def compute_r2_prod(args):
     logging.info('Loading SNP file...')
     geno_array = ldscore_r2.PlinkBEDFile(args.bfile+'.bed', n, array_snps, is_r2_snp, keep_snps=keep_snps,
         keep_indivs=keep_indivs, mafMin=mafMin)
-    df_annotations = df_annotations.iloc[geno_array.kept_snps]
+    #df_annotations = df_annotations.iloc[geno_array.kept_snps]
+    assert (df_annotations.index == snpnames[geno_array.kept_snps]).all()
         
     #compute r2_prod_table
     logging.info('Computing r2 prod...')

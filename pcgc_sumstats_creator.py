@@ -247,7 +247,7 @@ class PCGC_Sumstats:
     
         if chunk_size is None:
             chunk_size = int(float(MAX_SNPS_IN_MEMORY) / float(self.sample_size))
-            logging.info('Setting chunk size to %d to keep at most %d SNPs in memory at once'%(chunk_size, chunk_size*self.sample_size))
+            logging.info('Setting chunk size to %d to keep at most %d alleles in memory at once'%(chunk_size, chunk_size*self.sample_size))
         
         self.z = np.zeros(self.num_snps)
         self.sumstats_N = np.zeros(self.num_snps)
@@ -481,7 +481,7 @@ class PCGC_Sumstats:
                 df_bim = df_bim.loc[is_consistent_snp]
 
             #flip MAFs of flipped appeles
-            is_flipped = (df_maf[allele1_col] == df_bim['a0']) & (df_maf[allele0_col] == df_bim['a1'])            
+            is_flipped = ((df_maf[allele1_col] == df_bim['a0']) & (df_maf[allele0_col] == df_bim['a1'])).values
             maf_col = self.find_df_column(df_maf, ['MAF', 'FRQ', 'FREQ', 'A1Freq'], 'MAF')
             if np.any(is_flipped):
                 new_mafs = df_maf[maf_col].values
