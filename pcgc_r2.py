@@ -72,11 +72,29 @@ def compute_r2_prod(args):
         keep_indivs=keep_indivs, mafMin=mafMin)
     #df_annotations = df_annotations.iloc[geno_array.kept_snps]
     assert (df_annotations.index == snpnames[geno_array.kept_snps]).all()
+    
+    # determine block widths
+    num_wind_args = np.array((args.ld_wind_snps, args.ld_wind_kb, args.ld_wind_cm), dtype=bool)
+    if np.sum(num_wind_args) != 1:
+        raise ValueError('Must specify exactly one --ld-wind option')
+
+    if args.ld_wind_snps:
+        max_dist = args.ld_wind_snps
+        coords = np.array(range(geno_array.m))
+    elif args.ld_wind_kb:
+        max_dist = args.ld_wind_kb*1000
+        coords = np.array(array_snps.df['BP'])[geno_array.kept_snps]
+        if len(np.unique(coords)) == 1:
+            raise ValueError('bim file has no basepair data --- please use a different ld-wind option')
+    elif args.ld_wind_cm:
+        max_dist = args.ld_wind_cm
+        coords = np.array(array_snps.df['CM'])[geno_array.kept_snps]
+        if len(np.unique(coords)) == 1:
+            raise ValueError('bim file has no CM data --- please use a different ld-wind option')
         
     #compute r2_prod_table
     logging.info('Computing r2 prod...')
-    coords = np.array(array_snps.df['CM'])[geno_array.kept_snps]
-    block_left = ldscore_r2.getBlockLefts(coords, args.ld_wind_cm)
+    block_left = ldscore_r2.getBlockLefts(coords, max_dist)
     if block_left[len(block_left)-1] == 0:
         error_msg = 'Only a single block selected - this is probably a mistake'
         raise ValueError(error_msg)
@@ -101,11 +119,18 @@ if __name__ == '__main__':
     parser.add_argument('--extract', default=None, help='Name of files with names of SNPs to use. Other SNPs will not be used')
     parser.add_argument('--exclude', default=None, help='Name of files with names of SNPs to exclude')
     parser.add_argument('--out', required=True, help='output file prefix')
-    parser.add_argument('--ld-wind-cm', type=float, default=1.0, help='window size to be used for estimating r2 products in units of centiMorgans (cM).')
+    parser.add_argument('--ld-wind-cm', type=float, default=None, help='window size to be used for estimating r2 products in units of centiMorgans (cM).')
+    parser.add_argument('--ld-wind-kb', type=int, default=None, help='window size to be used for estimating r2 products in units of Kb.')
+    parser.add_argument('--ld-wind-snps', type=int, default=None, help='window size to be used for estimating r2 products in units of SNPs.')
     parser.add_argument('--chunk-size',  type=int, default=50, help='chunk size for r2 product calculation')
     
     parser.add_argument('--ld-all',  default=False, action='store_true', help='If this is set, the script will compute sum of r^2 between extracted SNPs and all SNPs')
     args = parser.parse_args()
+    
+    #Use default ld-wind parameter if none specified
+    if args.ld_wind_cm is None and args.ld_wind_kb is None and args.ld_wind_snps is None:
+        args.ld_wind_cm = 1.0
+        logging.warning('no ld-wind argument specified so I''m using --ld-cm 1.0')
     
     #check that the output directory exists
     if os.path.isabs(args.out) and not os.path.exists(os.path.dirname(args.out)):    
