@@ -42,6 +42,8 @@ def compute_r2_prod(args):
         df_extract = pd.read_table(args.extract, squeeze=True, header=None)
         is_good_snp = is_good_snp & (snpnames.isin(df_extract))
         logging.info('Extracting %d SNPs'%(np.sum(snpnames.isin(df_extract))))
+    if np.sum(is_good_snp) == 0:
+        raise ValueError('No SNPs selected')
         
     if args.ld_all:
         keep_snps = None
