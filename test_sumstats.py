@@ -10,13 +10,13 @@ def run_command(cmd):
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = proc.communicate()
     if stderr is not None:
-        print '%s stderr:'%(' '.join(cmd))
-        print stderr
+        print('%s stderr:'%(' '.join(cmd)))
+        print(stderr)
         raise IOError()
     rc = proc.returncode
     if (rc != 0):
-        print 'Command %s returned %d with the following stdout:'%(' '.join(cmd), rc)
-        print stdout
+        print('Command %s returned %d with the following stdout:'%(' '.join(cmd), rc))
+        print(stdout)
         raise IOError()        
     
 
@@ -31,7 +31,7 @@ def test_sumstats(tmpdir):
     # tmpdir = '/tmp/w9Q2Im'
     # output_prefix = os.path.join(str(tmpdir), 'results')
     
-    print 'temporary directory: %s'%(tmpdir)
+    print('temporary directory: %s'%(tmpdir))
     
     #create sumstats files
     sumstats_list = []
@@ -40,9 +40,9 @@ def test_sumstats(tmpdir):
         fname = os.path.splitext(example)[0]
         study_name = os.path.splitext(os.path.basename(fname))[0]
         study_names.append(study_name)
-        print 'Creating summary statistics for study %s...'%(study_name)
+        print('Creating summary statistics for study %s...'%(study_name))
         sumstats_list.append(os.path.join(str(tmpdir), '%s.'%(study_name)))
-        for chr_num in xrange(1,23):
+        for chr_num in range(1,23):
             model_chr_fname = os.path.join(example_dir, 'model')+'.%d.'%(chr_num)
             out_fname = os.path.join(str(tmpdir), '%s.%d'%(study_name, chr_num))
             #out_fname = os.path.join(example_dir, 'results', '%s.%d'%(study_name, chr_num))

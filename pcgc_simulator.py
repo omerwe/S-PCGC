@@ -58,7 +58,7 @@ class CC_Study:
         case_inds = np.where(liab >= affection_cutoff)[0]
         assert len(case_inds >= num_cases)
         case_inds = np.random.permutation(case_inds)[:num_cases]
-        case_iid = np.array(['case%d_%s'%(i+1,random_str) for i in xrange(len(case_inds))])
+        case_iid = np.array(['case%d_%s'%(i+1,random_str) for i in range(len(case_inds))])
         
         #select controls        
         num_controls = int(int(n*(1-frac_cases)))
@@ -68,7 +68,7 @@ class CC_Study:
         else:
             num_shared = Z_shared_con.shape[0]
             control_inds1 = np.arange(num_shared)
-        control1_iid = np.array(['shared_control%d'%(i+1) for i in xrange(len(control_inds1))])
+        control1_iid = np.array(['shared_control%d'%(i+1) for i in range(len(control_inds1))])
         if len(control_inds1) >= num_controls:
             randperm = np.random.permutation(len(control_inds1))[:num_controls]
             control_inds = control_inds1[randperm]
@@ -80,7 +80,7 @@ class CC_Study:
             control_inds2 = np.where(is_control2)[0]
             assert len(control_inds2 >= num_controls2)
             control_inds2 = np.random.permutation(control_inds2)[:num_controls2]
-            control2_iid = np.array(['control%d_%s'%(i+1,random_str) for i in xrange(len(control_inds2))])
+            control2_iid = np.array(['control%d_%s'%(i+1,random_str) for i in range(len(control_inds2))])
             control_inds = np.concatenate((control_inds1, control_inds2))
             control_iid = np.concatenate((control1_iid, control2_iid))
         
@@ -152,7 +152,7 @@ class CC_Study:
         
         #create a covariates file if required        
         if self.X_all.shape[1] > 0:            
-            cov_names = ['cov%d'%(i+1) for i in xrange(self.X_all.shape[1])]
+            cov_names = ['cov%d'%(i+1) for i in range(self.X_all.shape[1])]
             df_cov = pd.DataFrame(self.X_all, columns=cov_names)
             df_cov.insert(0, 'fid', iid)
             df_cov.insert(1, 'iid', iid)
@@ -174,7 +174,7 @@ class CC_Study:
         Z_p[(self.Z_snps==1) & (~is_mat_first)] = 1
         Z_haploid[:, ::2] = Z_p
         Z_haploid[:, 1::2] = Z_m
-        snp_names = ['snp%d'%(i+1) for i in xrange(m)]
+        snp_names = ['snp%d'%(i+1) for i in range(m)]
         snp_col_names = list(itertools.chain.from_iterable([(s+'_1', s+'_2') for s in snp_names]))
         df_Z_haploid = pd.DataFrame(Z_haploid+1, columns=snp_col_names)
         
@@ -193,8 +193,8 @@ class CC_Study:
         proc = subprocess.Popen(cmdLine, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, stderr = proc.communicate()
         if (stderr is not None):
-            print 'plink stderr:'
-            print stderr
+            print('plink stderr:')
+            print(stderr)
             raise Exception()        
         assert os.path.exists(plink_fname+'.bed')
             
@@ -223,7 +223,7 @@ class CC_Studies:
         chr_arr = np.ones(m, dtype=np.int)
         bin_size = (m / 2) / 21
         bin_i = m / 2
-        for chr_num in xrange(2,23):
+        for chr_num in range(2,23):
             chr_arr[bin_i : bin_i+bin_size] = chr_num
             bin_i += bin_size
         if bin_i < len(chr_arr)-1:
@@ -257,23 +257,23 @@ class CC_Studies:
         num_studies = len(self.n_arr)
         num_anno = self.annotations.shape[1]
         beta3d = np.empty((self.m, num_studies, num_anno))
-        for anno_i in xrange(num_anno):
+        for anno_i in range(num_anno):
             assert len(np.unique(np.sign(np.diag(self.beta_covar_arr[anno_i]))))==1
             L_sign = np.sign(self.beta_covar_arr[anno_i,0,0])
             L = la.cholesky(self.beta_covar_arr[anno_i] * L_sign, lower=True)            
             assert np.allclose(L.dot(L.T)*L_sign, self.beta_covar_arr[anno_i])
             #print 'generating betas for annotation %d'%(anno_i+1)
-            for m_i in tqdm(range(self.m), disable=True):
+            for m_i in tqdm(list(range(self.m)), disable=True):
                 beta3d[m_i, :, anno_i] = L.dot(np.random.randn(num_studies))*L_sign
             
         #Compute betas of each SNP ii each study according to its annotations
         beta_arr = np.empty((num_studies, self.m))
-        for study_i in xrange(num_studies):
+        for study_i in range(num_studies):
             beta_arr[study_i] = np.einsum('ij,ij->i', beta3d[:,study_i,:], self.annotations)
                     
         #generate beta_covariates
         beta_covariates = []
-        for study_i in xrange(num_studies):
+        for study_i in range(num_studies):
             if self.c_arr[study_i]==0:
                 beta_covariates_i = np.array([])
             else:
@@ -289,8 +289,8 @@ class CC_Studies:
         
         #create studies
         studies_arr = []
-        for i in xrange(num_studies):
-            print 'creating study %d/%d'%(i+1, num_studies)
+        for i in range(num_studies):
+            print('creating study %d/%d'%(i+1, num_studies))
             study = CC_Study(mafs, self.h2_arr[i],
                     beta_arr[i], beta_covariates[i], self.prev_arr[i], self.n_arr[i],                    
                     df_map=self.df_map, Z_shared_con=Z_shared_con, use_liab = self.use_liab_arr[i],
@@ -303,11 +303,11 @@ class CC_Studies:
 
     def write_files(self, multi_chrom):
         #write ref files
-        print 'writing annotation files...'
+        print('writing annotation files...')
         self.write_ref_files(multi_chrom)
         
         #write plink files
-        print 'writing plink files...'
+        print('writing plink files...')
         for s in self.studies_arr:
             s.write_plink_file()
                  
@@ -319,7 +319,7 @@ class CC_Studies:
         
         
     def create_plink_maf(self, m):
-        snp_names = ['snp%d'%(i+1) for i in xrange(m)]        
+        snp_names = ['snp%d'%(i+1) for i in range(m)]        
         df_map = pd.DataFrame(snp_names, columns=['SNP'])            
         df_map.insert(0, 'CHR', self.chr_arr)
         df_map['CM'] = np.arange(m) / 10.0
@@ -343,7 +343,7 @@ class CC_Studies:
             df_mafs_chr.to_csv(ref_fname+'.%d.frq'%(chr_num), sep='\t', index=False, header=True)
             
         #create a sync file
-        annotation_names = ['anno_%d'%(anno_i+1) for anno_i in xrange(self.annotations.shape[1])]        
+        annotation_names = ['anno_%d'%(anno_i+1) for anno_i in range(self.annotations.shape[1])]        
         min_annot = np.min(self.annotations, axis=0)
         min_annot[min_annot>0]=0
         df_sync = pd.Series(min_annot, index=annotation_names)

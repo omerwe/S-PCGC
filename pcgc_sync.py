@@ -65,7 +65,7 @@ def pcgc_sync2(args):
     if args.annot is not None:
         annot_fname_list = [args.annot+'annot.gz']
     else:
-        annot_fname_list = [args.annot_chr+'%d.annot.gz'%(chr_num) for chr_num in xrange(1,23)]
+        annot_fname_list = [args.annot_chr+'%d.annot.gz'%(chr_num) for chr_num in range(1,23)]
     
     #round 1: Collect min_annot fields
     logging.info('Computing annotation minimum values')

@@ -29,12 +29,12 @@ def configure_logger(out_prefix):
     logger.addHandler(fileHandler)
 
 def splash_screen():
-    print '*********************************************************************'
-    print '* S-PCGC sumstats creator'
-    print '* Version 2.0.0'
-    print '* (C) 2018 Omer Weissbrod'
-    print '*********************************************************************'
-    print
+    print('*********************************************************************')
+    print('* S-PCGC sumstats creator')
+    print('* Version 2.0.0')
+    print('* (C) 2018 Omer Weissbrod')
+    print('*********************************************************************')
+    print()
 
 
 class PCGC_Sumstats:
@@ -255,7 +255,7 @@ class PCGC_Sumstats:
         if self.L_CTC is not None:
             self.G_noregress_diag = np.zeros((self.sample_size, self.df_annotations_noneg.shape[1]))
         logging.info('Starting summary statistics computation...')
-        for snp1 in tqdm(xrange(0, self.num_snps, chunk_size)):            
+        for snp1 in tqdm(range(0, self.num_snps, chunk_size)):            
             snp2 = snp1 + chunk_size            
             self.set_locus(snp1, snp2)
             annot_noneg = self.df_annotations_noneg.iloc[snp1:snp2].values
@@ -292,7 +292,7 @@ class PCGC_Sumstats:
         #normalize SNPs (the loop is faster than vector computations, believe it or not)
         n = X.shape[0]
         self.n = np.zeros(X.shape[1], dtype=np.int)
-        for j in xrange(0, X.shape[1]):
+        for j in range(0, X.shape[1]):
             newsnp = X[:, j]
             is_miss = np.isnan(newsnp)
             num_miss = is_miss.sum()
@@ -356,7 +356,7 @@ class PCGC_Sumstats:
         
     def find_df_column(self, df, strings_to_find, df_name):
         
-        if isinstance(strings_to_find, basestring):
+        if isinstance(strings_to_find, str):
             strings_to_find = [strings_to_find]
             
         is_relevant_col = np.zeros(df.shape[1], dtype=np.bool)

@@ -7,7 +7,7 @@ This module contains functions for parsing various ldsc-defined file formats.
 
 '''
 
-from __future__ import division
+
 import numpy as np
 import pandas as pd
 import os
@@ -151,7 +151,7 @@ def ldscore(fh, num=None):
     if num is not None:  # num files, e.g., one per chromosome
         first_fh = sub_chr(fh, 1) + suffix
         s, compression = which_compression(first_fh)
-        chr_ld = [l2_parser(sub_chr(fh, i) + suffix + s, compression) for i in xrange(1, num + 1)]
+        chr_ld = [l2_parser(sub_chr(fh, i) + suffix + s, compression) for i in range(1, num + 1)]
         x = pd.concat(chr_ld)  # automatically sorted by chromosome
     else:  # just one file
         s, compression = which_compression(fh + suffix)
@@ -171,7 +171,7 @@ def M(fh, num=None, N=2, common=False):
         suffix += '_5_50'
 
     if num is not None:
-        x = np.sum([parsefunc(sub_chr(fh, i) + suffix) for i in xrange(1, num + 1)], axis=0)
+        x = np.sum([parsefunc(sub_chr(fh, i) + suffix) for i in range(1, num + 1)], axis=0)
     else:
         x = parsefunc(fh + suffix)
 
@@ -207,7 +207,7 @@ def annot(fh_list, num=None, frqfile=None, anno=None):
 
         y = []
         M_tot = 0
-        for chr in xrange(1, num + 1):
+        for chr in range(1, num + 1):
             if frqfile is not None:
                 df_annot_chr_list = [annot_parser(sub_chr(fh, chr) + annot_suffix[i], annot_compression[i],
                                                   sub_chr(frqfile, chr) + frq_suffix, frq_compression, anno=anno)

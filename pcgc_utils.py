@@ -46,7 +46,7 @@ def load_dfs(file_prefix, file_prefix_chr, file_suffix, arg_name, flag_name, joi
         if file_prefix is not None:
             flist = ['%s%s'%(fh, file_suffix)]
         else:
-            flist = ['%s%d.%s'%(fh, chr_num, file_suffix) for chr_num in xrange(1,23)]
+            flist = ['%s%d.%s'%(fh, chr_num, file_suffix) for chr_num in range(1,23)]
             
         #iterate over chromosomes
         df_allchr = []
@@ -96,7 +96,7 @@ def _splitp(fstr):
     
 def find_df_column(df, strings_to_find):
     
-    if isinstance(strings_to_find, basestring):
+    if isinstance(strings_to_find, str):
         strings_to_find = [strings_to_find]
         
     is_relevant_col = np.zeros(df.shape[1], dtype=np.bool)

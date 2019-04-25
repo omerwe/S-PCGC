@@ -10,16 +10,17 @@ import string
 import random
 import pcgc_utils
 import scipy.optimize as optimize
+from functools import reduce
 
 MIN_NUM_SNPS = 100
     
 def splash_screen():
-    print '*********************************************************************'
-    print '* S-PCGC for heritability and genetic correlation estimates'
-    print '* Version 2.0.0'
-    print '* (C) 2018 Omer Weissbrod'
-    print '*********************************************************************'
-    print
+    print('*********************************************************************')
+    print('* S-PCGC for heritability and genetic correlation estimates')
+    print('* Version 2.0.0')
+    print('* (C) 2018 Omer Weissbrod')
+    print('*********************************************************************')
+    print()
     
 
 class SPCGC_Data:
@@ -88,7 +89,7 @@ class SPCGC_Data:
                     df_Gty = df_Gty.loc[:, category_names]
                 
             #normalize Gty by the total number of SNPs in the genome
-            for anno_i in xrange(df_Gty.shape[1]):
+            for anno_i in range(df_Gty.shape[1]):
                 df_Gty.iloc[:,anno_i] /= np.sqrt(M_annot_sumstats2[anno_i])                
               
         M_base = M_annot_sumstats2[0]
@@ -97,7 +98,7 @@ class SPCGC_Data:
                     
     def create_synthetic_Gty(self, N, mean_Q, category_names, str_len=10):
         random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(str_len))
-        iid = [random_str+str(i) for i in xrange(1,int(N+1))]
+        iid = [random_str+str(i) for i in range(1,int(N+1))]
         df_Gty = pd.DataFrame(iid, columns=['fid'])
         df_Gty['iid'] = iid            
         df_Gty.set_index(['fid','iid'], inplace=True, drop=True)
@@ -394,9 +395,9 @@ class SPCGC:
                                 
         #compute h2 and gencov of each pair of studies
         gencov_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=np.object)
-        for i in xrange(len(pcgc_data_list)):
+        for i in range(len(pcgc_data_list)):
             oi = pcgc_data_list[i]
-            for j in xrange(i+1):
+            for j in range(i+1):
                 oj = pcgc_data_list[j]                
                 cov_ij = self.create_cov_obj(args, oi, oj,
                                              df_annotations_sumstats_noneg, df_prodr2, df_sync, df_overlap, M_annot,
@@ -407,8 +408,8 @@ class SPCGC:
                                
         #compute rg
         rg_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=np.object)
-        for i in xrange(len(pcgc_data_list)):
-            for j in xrange(i+1):
+        for i in range(len(pcgc_data_list)):
+            for j in range(i+1):
                 rg_arr[i,j] = SPCGC_RG(gencov_arr[i,i], gencov_arr[j,j], gencov_arr[i,j], M_annot, df_prodr2.columns)
                 rg_arr[j,i] = rg_arr[i,j]
                 
@@ -583,7 +584,7 @@ class SPCGC:
             fname_list = args.sumstats_chr.split(',')    
         
         #write h2 and enrichment results to files
-        for i in xrange(len(fname_list)):
+        for i in range(len(fname_list)):
             fname_prefix = args.out + '.' + os.path.basename(fname_list[i])
             if fname_prefix[-1] == '.': fname_prefix = fname_prefix[:-1]
             self.gencov_arr[i,i].df_enrichment.to_csv(fname_prefix+'.results', sep='\t', index=False, float_format='%0.3e', na_rep='nan')
@@ -597,8 +598,8 @@ class SPCGC:
         #write rg results to file
         if len(fname_list) > 1:
             rg_arr_for_df = np.empty((len(fname_list), len(fname_list)), dtype=np.object)
-            for i in xrange(len(fname_list)):
-                for j in xrange(i+1):
+            for i in range(len(fname_list)):
+                for j in range(i+1):
                     rg_arr_for_df[i,j] = '%0.4f (%0.4f)'%(self.rg_arr[i,j].rg, self.rg_arr[i,j].rg_se)
                     rg_arr_for_df[j,i] = rg_arr_for_df[i,j]
             df_rg = pd.DataFrame(rg_arr_for_df, index=fname_list, columns=fname_list)
@@ -607,8 +608,8 @@ class SPCGC:
                 
         #write detailed rg results to file
         if args.rg_annot:
-            for i in xrange(len(fname_list)):
-                for j in xrange(len(fname_list)):
+            for i in range(len(fname_list)):
+                for j in range(len(fname_list)):
                     if i==j: continue
                     fname1 = os.path.basename(fname_list[i])
                     fname2 = os.path.basename(fname_list[j])
@@ -769,7 +770,7 @@ class SPCGC:
         separators = np.floor(np.linspace(0, len(z1_anno), args.n_blocks+1)).astype(int)
         delete_values = np.empty((args.n_blocks, ZTY.shape[0]))
         delete_intercepts = np.empty(args.n_blocks)
-        for block_i in xrange(args.n_blocks):
+        for block_i in range(args.n_blocks):
             b_slice = slice(separators[block_i], separators[block_i+1])
             b_M = np.einsum('ij,ij->j', df_annotations_sumstats_noneg.values[b_slice], df_annotations_sumstats_noneg.values[b_slice])
             z12_noblock_i = z12 - np.einsum('ij,ij->j', z1_anno[b_slice,:], z2_anno[b_slice,:])

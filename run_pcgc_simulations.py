@@ -10,6 +10,7 @@ import itertools
 import subprocess
 import os
 import logging
+import imp
 logging.getLogger().setLevel(logging.CRITICAL)
 
 import pcgc_sumstats_creator
@@ -36,8 +37,8 @@ def run_gcta(gcta_exe, plink_fname, prev):
     proc = subprocess.Popen(cmdLine, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = proc.communicate()
     if (stderr is not None):
-        print 'GCTA make-grm error:'
-        print stderr
+        print('GCTA make-grm error:')
+        print(stderr)
         raise Exception()
     assert os.path.exists(plink_fname+'.grm.bin')
     
@@ -48,13 +49,13 @@ def run_gcta(gcta_exe, plink_fname, prev):
     proc = subprocess.Popen(cmdLine, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = proc.communicate()
     if (stderr is not None):
-        print 'GCTA REML error:'
-        print stderr
+        print('GCTA REML error:')
+        print(stderr)
         raise Exception()
     rc = proc.returncode
     if (rc != 0):
-        print 'Command %s returned %d with the following stdout:'%(' '.join(cmdLine), rc)
-        print stdout
+        print('Command %s returned %d with the following stdout:'%(' '.join(cmdLine), rc))
+        print(stdout)
         raise IOError()        
     assert os.path.exists(plink_fname+'.hsq')
     
@@ -122,9 +123,9 @@ def pcgc(K_list, y1, y2, prev1, prev2, X1, X2, remove_diag=True):
     #create V (equivalent to denom)
     num_anno = len(K_list)
     V = np.empty((num_anno,num_anno))
-    for i in xrange(num_anno):
+    for i in range(num_anno):
         KQ_i = K_list[i]*Q
-        for j in xrange(i,num_anno):
+        for j in range(i,num_anno):
             KQ_j = K_list[j]*Q            
             V[i,j] = np.einsum('ij,ij->', KQ_i, KQ_j)
             if remove_diag:
@@ -134,7 +135,7 @@ def pcgc(K_list, y1, y2, prev1, prev2, X1, X2, remove_diag=True):
     #create R (equivalent to numer)
     R = np.empty(num_anno)
     yy = np.outer(y1_norm,y2_norm)
-    for i in xrange(num_anno):
+    for i in range(num_anno):
         KQ_i = K_list[i]*Q
         R[i] = np.einsum('ij,ij->', yy, KQ_i)
         if remove_diag:
@@ -169,8 +170,8 @@ def run_plink_linreg(plink_exe, plink_fname, out_fname, n, chr_num=None):
     proc = subprocess.Popen(plink_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = proc.communicate()
     if (stderr is not None):
-        print 'plink stderr:'
-        print stderr
+        print('plink stderr:')
+        print(stderr)
         raise Exception()        
     assert os.path.exists(out_fname+'.qassoc')
     
@@ -213,7 +214,7 @@ def run_pcgc_sumstats_creator(prev, ref_fname, plink_fname, out_fname, study_obj
         sumstats_args.pve = plink_fname+'.pve'
         num_c = study_obj.X.shape[1]
         num_PCs = study_obj.X_PCs.shape[1]
-        sumstats_args.covars_regress = ','.join(['cov%d'%(i) for i in xrange(num_c+1, num_PCs+1)])
+        sumstats_args.covars_regress = ','.join(['cov%d'%(i) for i in range(num_c+1, num_PCs+1)])
     else:
         sumstats_args.covars_regress = None
         sumstats_args.pve = None
@@ -224,7 +225,7 @@ def run_pcgc_sumstats_creator(prev, ref_fname, plink_fname, out_fname, study_obj
         sumstats_args.extract = create_chr_extract_file(plink_fname, chr_num)    
         
     #create a sumstats object and write its output to a temp file
-    reload(pcgc_sumstats_creator); sumstats_creator = pcgc_sumstats_creator.PCGC_Sumstats(args=sumstats_args)
+    imp.reload(pcgc_sumstats_creator); sumstats_creator = pcgc_sumstats_creator.PCGC_Sumstats(args=sumstats_args)
     sumstats_creator.compute_all_sumstats()
     sumstats_creator.write_output(out_fname)        
         
@@ -233,7 +234,7 @@ def create_sumstats(studies_obj, multi_chrom):
     
     sumstats_prefixes = []    
     ref_fname = studies_obj.ref_fname    
-    for study_i in xrange(num_studies):
+    for study_i in range(num_studies):
     
         #extract the data of study i
         study_obj = studies_obj.studies_arr[study_i]
@@ -248,7 +249,7 @@ def create_sumstats(studies_obj, multi_chrom):
         if len(np.unique(study_obj.y)) > 2:
             n = len(study_obj.y)
             if multi_chrom:
-                for chr_num in xrange(1,23):
+                for chr_num in range(1,23):
                     run_plink_linreg(PLINK_EXE, plink_fname, ss_fname+'.%d'%(chr_num), n, chr_num=chr_num)
             else:
                 run_plink_linreg(PLINK_EXE, plink_fname, ss_fname, n, chr_num=None)
@@ -256,7 +257,7 @@ def create_sumstats(studies_obj, multi_chrom):
         #if it's a case-control study
         else:
             if multi_chrom:
-                for chr_num in xrange(1,23):
+                for chr_num in range(1,23):
                     run_pcgc_sumstats_creator(prev, ref_fname, plink_fname, ss_fname+'.%d'%(chr_num), study_obj, multi_chrom, chr_num=chr_num)
             else:
                 run_pcgc_sumstats_creator(prev, ref_fname, plink_fname, ss_fname, study_obj, multi_chrom, chr_num=None)
@@ -304,7 +305,7 @@ def run_pcgc_sumstats(ref_fname, sumstats_prefixes, multi_chrom, use_he):
     spcgc_args.sync = ref_fname+'.'
     
     #run S-PCGC
-    reload(pcgc_main); pcgc_obj = pcgc_main.SPCGC(args=spcgc_args)
+    imp.reload(pcgc_main); pcgc_obj = pcgc_main.SPCGC(args=spcgc_args)
     return pcgc_obj, out_fname_prefix
     
 def create_effects_covariance_matrix(annotations, h2_arr, rg_matrix):
@@ -316,18 +317,18 @@ def create_effects_covariance_matrix(annotations, h2_arr, rg_matrix):
     #sigma2_anno_base[1]=1e-6; print 'sigma2_anno_base[1]=1e-6!!!!!!!!!!!!'
     snp_var_base = annotations.dot(sigma2_anno_base)        
     sigma2_anno_arr = np.empty((num_studies, num_anno))
-    for study_i in xrange(num_studies):
+    for study_i in range(num_studies):
         sigma2_anno_arr[study_i] = sigma2_anno_base * h2_arr[study_i] / snp_var_base.sum()    
         if not np.all(annotations.dot(sigma2_anno_arr[study_i]) > 0):
             raise ValueError()
         
     #create the covariance matrix
     beta_covar_arr = np.empty((num_anno, num_studies, num_studies))    
-    for anno_i in xrange(num_anno):
+    for anno_i in range(num_anno):
         beta_covar_arr[anno_i] = np.diag(sigma2_anno_arr[:, anno_i])
         b = beta_covar_arr[anno_i]
-        for s_i in xrange(num_studies):
-            for s_j in xrange(s_i):                
+        for s_i in range(num_studies):
+            for s_j in range(s_i):                
                 b[s_i,s_j] = rg_matrix[s_i,s_j] * np.sqrt(b[s_i,s_i] * b[s_j,s_j])
                 b[s_j,s_i] = b[s_i,s_j]
     assert np.all(~np.isnan(beta_covar_arr)) 
@@ -348,12 +349,12 @@ def pcgc_direct_all(studies_obj, annotations, use_PCs):
     
     #create all GRMs
     K_arr = np.empty((num_anno, num_studies, num_studies), dtype=np.object)
-    for anno_i in xrange(num_anno):
+    for anno_i in range(num_anno):
         w = annotations[:,anno_i] - min_annot[anno_i]; assert np.all(w >= 0)
-        for study_i in xrange(num_studies):
+        for study_i in range(num_studies):
             o_i = studies_obj.studies_arr[study_i] 
             Z_i = (o_i.Z_r if use_PCs else o_i.Z)
-            for study_j in xrange(study_i, num_studies):
+            for study_j in range(study_i, num_studies):
                 o_j = studies_obj.studies_arr[study_j]
                 Z_j = (o_j.Z_r if use_PCs else o_j.Z)
                 K = (Z_i * w**2).dot(Z_j.T) / w.dot(w)
@@ -363,7 +364,7 @@ def pcgc_direct_all(studies_obj, annotations, use_PCs):
                     df_iid_i = pd.DataFrame(np.arange(len(o_i.study_iid)), index=o_i.study_iid, columns=['ind_pos'])
                     df_iid_j = pd.DataFrame(np.arange(len(o_j.study_iid)), index=o_j.study_iid, columns=['ind_pos'])
                     df_iid_both = df_iid_i.merge(df_iid_j, left_index=True, right_index=True, suffixes=('_i', '_j'))
-                    print 'Studies %d,%d include %d shared individuals'%(study_i+1, study_j+1, df_iid_both.shape[0])
+                    print('Studies %d,%d include %d shared individuals'%(study_i+1, study_j+1, df_iid_both.shape[0]))
                     for ind, row in df_iid_both.iterrows():
                         ind_pos_i, ind_pos_j = row['ind_pos_i'], row['ind_pos_j']
                         K[ind_pos_i,ind_pos_j]=0
@@ -374,11 +375,11 @@ def pcgc_direct_all(studies_obj, annotations, use_PCs):
                 
     #compute h2 / genetic covariance
     gencov = np.zeros((num_anno, num_studies, num_studies))
-    for study_i in xrange(num_studies):
+    for study_i in range(num_studies):
         y_i = studies_obj.studies_arr[study_i].y
         X_i = studies_obj.studies_arr[study_i].X_all
         prev_i = prev_arr[study_i]
-        for study_j in xrange(study_i+1):
+        for study_j in range(study_i+1):
             y_j = studies_obj.studies_arr[study_j].y
             X_j = studies_obj.studies_arr[study_j].X_all
             prev_j = prev_arr[study_j]
@@ -393,12 +394,12 @@ def pcgc_direct_all(studies_obj, annotations, use_PCs):
             gencov[:, study_j, study_i] = pcgc_est
     
     #print out all the results
-    for study_i in xrange(num_studies):
-        print 'h2 study %d: %0.3f'%(study_i+1, gencov[:, study_i, study_i].sum()), gencov[:, study_i, study_i]
-    for study_i in xrange(num_studies):
-        for study_j in xrange(study_i+1, num_studies):
-            print 'gencor studies %d,%d:'%(study_i+1, study_j+1),
-            print '%0.3f'%(gencov[:, study_i, study_j].sum() / np.sqrt(gencov[:, study_i, study_i].sum()*gencov[:, study_j, study_j].sum()))
+    for study_i in range(num_studies):
+        print('h2 study %d: %0.3f'%(study_i+1, gencov[:, study_i, study_i].sum()), gencov[:, study_i, study_i])
+    for study_i in range(num_studies):
+        for study_j in range(study_i+1, num_studies):
+            print('gencor studies %d,%d:'%(study_i+1, study_j+1), end=' ')
+            print('%0.3f'%(gencov[:, study_i, study_j].sum() / np.sqrt(gencov[:, study_i, study_i].sum()*gencov[:, study_j, study_j].sum())))
     
     
     
@@ -449,7 +450,7 @@ def simulate_studies(num_snps, h2_arr, prev_arr, n_arr, anno_freq, rg=0.5, rg_ma
         rg_matrix = np.ones((num_studies, num_studies))*rg
     
     #generate covariance matrices of every annotations in every pair of studies
-    for try_num in xrange(100):
+    for try_num in range(100):
         try:
             beta_covar_arr = create_effects_covariance_matrix(annotations, h2_arr, rg_matrix)
         except ValueError:
@@ -457,10 +458,10 @@ def simulate_studies(num_snps, h2_arr, prev_arr, n_arr, anno_freq, rg=0.5, rg_ma
         break
     
     #create simulated datasets
-    reload(pcgc_simulator); studies_obj = pcgc_simulator.CC_Studies(annotations=annotations, h2_arr=h2_arr, beta_covar_arr=beta_covar_arr, m=m, n_arr=n_arr, c_arr=c_arr, prev_arr=prev_arr, h2_c_arr=h2_c_arr, num_shared_con=num_shared_con, use_liab_arr=np.ones(num_studies)*int(use_liab)); studies_obj.simulate_studies()
+    imp.reload(pcgc_simulator); studies_obj = pcgc_simulator.CC_Studies(annotations=annotations, h2_arr=h2_arr, beta_covar_arr=beta_covar_arr, m=m, n_arr=n_arr, c_arr=c_arr, prev_arr=prev_arr, h2_c_arr=h2_c_arr, num_shared_con=num_shared_con, use_liab_arr=np.ones(num_studies)*int(use_liab)); studies_obj.simulate_studies()
 
     #apply PC correction
-    for study_i in xrange(num_studies):
+    for study_i in range(num_studies):
         studies_obj.studies_arr[study_i].compute_PCs(num_pcs_arr[study_i])
         
     #run direct PCGC-s
@@ -478,7 +479,7 @@ def simulate_studies(num_snps, h2_arr, prev_arr, n_arr, anno_freq, rg=0.5, rg_ma
 def pcgc_h2(studies_obj, use_he=False):
     sumstats_prefixes = create_sumstats(studies_obj, multi_chrom=False)
     pcgc_obj, results_prefix = run_pcgc_sumstats(studies_obj.ref_fname, sumstats_prefixes, multi_chrom=False, use_he=use_he)
-    h2_estimates = [pcgc_obj.gencov_arr[i,i].tot for i in xrange(len(studies_obj.studies_arr))]
+    h2_estimates = [pcgc_obj.gencov_arr[i,i].tot for i in range(len(studies_obj.studies_arr))]
     return h2_estimates
     
 def gcta_h2(studies_obj):
@@ -508,13 +509,13 @@ if __name__ == '__main__':
     num_experiments = 100
     gcta_bias_list = []
     pcgc_bias_list = []
-    for exp_num in xrange(num_experiments):
+    for exp_num in range(num_experiments):
         studies_obj = simulate_studies(num_snps, h2_arr, prev_arr, n_arr, anno_freq, 
                             c_arr=c_arr, h2_c_arr=h2_c_arr, num_shared_con=num_shared_con, use_liab=use_liab,
                             num_pcs_arr=num_pcs_arr)
         h2_experiment_pcgc = pcgc_h2(studies_obj, use_he=use_liab)
         h2_experiment_gcta = gcta_h2(studies_obj)
-        for h2_i in xrange(len(h2_experiment_pcgc)):
+        for h2_i in range(len(h2_experiment_pcgc)):
             gcta_bias = h2_experiment_gcta[h2_i] - h2_arr[h2_i]
             gcta_bias_list.append(gcta_bias)
             pcgc_bias = h2_experiment_pcgc[h2_i] - h2_arr[h2_i]
@@ -524,7 +525,7 @@ if __name__ == '__main__':
         pcgc_bias_avg = np.mean(pcgc_bias_list)
         gcta_bias_std = np.std(gcta_bias_list)
         pcgc_bias_std = np.std(pcgc_bias_list)
-        print 'Experiment %d  PCGC bias: %0.3f (%0.3f)  GCTA bias: %0.3f (%0.3f)'%(exp_num+1, pcgc_bias_avg, pcgc_bias_std, gcta_bias_avg, gcta_bias_std)
+        print('Experiment %d  PCGC bias: %0.3f (%0.3f)  GCTA bias: %0.3f (%0.3f)'%(exp_num+1, pcgc_bias_avg, pcgc_bias_std, gcta_bias_avg, gcta_bias_std))
             
         
     

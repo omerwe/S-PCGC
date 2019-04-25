@@ -7,6 +7,7 @@ import ldsc_parse as ps
 import logging
 import ldscore_r2
 import pcgc_utils
+import imp
 
 
 def compute_r2_prod(args):
@@ -68,7 +69,7 @@ def compute_r2_prod(args):
     #read plink file    
     keep_indivs = None
     mafMin = None
-    reload(ldscore_r2)
+    imp.reload(ldscore_r2)
     logging.info('Loading SNP file...')
     geno_array = ldscore_r2.PlinkBEDFile(args.bfile+'.bed', n, array_snps, is_r2_snp, keep_snps=keep_snps,
         keep_indivs=keep_indivs, mafMin=mafMin)
@@ -82,7 +83,7 @@ def compute_r2_prod(args):
 
     if args.ld_wind_snps:
         max_dist = args.ld_wind_snps
-        coords = np.array(range(geno_array.m))
+        coords = np.array(list(range(geno_array.m)))
     elif args.ld_wind_kb:
         max_dist = args.ld_wind_kb*1000
         coords = np.array(array_snps.df['BP'])[geno_array.kept_snps]
