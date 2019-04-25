@@ -119,9 +119,9 @@ cat temp_results/results.s2.results | column -t
 The following example uses simulated genotypes and real functional annotations from the [Baseline-LD model](https://www.nature.com/articles/ng.3954). In this example, we will use a 'representative set of genotyped or well-imputed SNPs' stored in the file example/good_snps.txt. (generally, 'good SNPs' should be genotyped or well-imputed SNPs (e.g. INFO score >0.9) that passed QC and are not in the MHC region --- see details below).
 To run this example, you need a directory called `1000G` that contains plink files of European individuals from the 1000 genomes reference panel (one file per chromosome; see download instructions below). You can create a symbolic link to this directory from your working directory with the command `ln -s <path_to_1000G> 1000G`.
 ```
-#download and uncompress the Baseline-LD (v2) annotations
-wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.1_ldscores.tgz
-tar -xzvf 1000G_Phase3_baselineLD_v2.1_ldscores.tgz
+#download and uncompress the Baseline-LD (v2.2) annotations
+wget https://data.broadinstitute.org/alkesgroup/LDSCORE/1000G_Phase3_baselineLD_v2.2_ldscores.tgz
+tar -xzvf 1000G_Phase3_baselineLD_v2.2_ldscores.tgz
 
 #Compute 1000G MAFs (please change ~/plink/plink to the local path of your plink executable)
 for i in {1..22};
@@ -134,7 +134,7 @@ done
 
 #run pcgc_sync.py to collect annotations details
 python pcgc_sync.py \
---annot-chr baselineLD_v2.1/baselineLD. \
+--annot-chr baselineLD_v2.2/baselineLD. \
 --frqfile-chr 1000G/1000G.EUR.QC. \
 --out baselineLD_v2.1/baselineLD
 
@@ -142,11 +142,11 @@ python pcgc_sync.py \
 for i in {1..22};
 do
     python pcgc_r2.py \
-    --annot baselineLD_v2.1/baselineLD.${i}. \
-    --sync baselineLD_v2.1/baselineLD. \
+    --annot baselineLD_v2.2/baselineLD.${i}. \
+    --sync baselineLD_v2.2/baselineLD. \
     --bfile 1000G/1000G.EUR.QC.${i} \
     --extract example/good_snps.txt \
-    --out baselineLD_v2.1/baselineLD.goodSNPs.${i} 
+    --out baselineLD_v2.2/baselineLD.goodSNPs.${i} 
 done
 
 #Create summary statistics
@@ -158,19 +158,19 @@ do
     --extract example/good_snps.txt \
     --pheno example/s1.phe \
     --covar example/s1.cov \
-    --annot baselineLD_v2.1/baselineLD.${i}. \
+    --annot baselineLD_v2.2/baselineLD.${i}. \
     --frqfile 1000G/1000G.EUR.QC.${i}. \
-    --sync baselineLD_v2.1/baselineLD. \
+    --sync baselineLD_v2.2/baselineLD. \
     --prev 0.01 \
     --out s1_sumstats/s1_chr${i}
 done
 
 #estimate heritability and functional enrichment
 python pcgc_main.py \
---annot-chr baselineLD_v2.1/baselineLD. \
---sync baselineLD_v2.1/baselineLD. \
+--annot-chr baselineLD_v2.2/baselineLD. \
+--sync baselineLD_v2.2/baselineLD. \
 --sumstats-chr s1_sumstats/s1_chr \
---prodr2-chr baselineLD_v2.1/baselineLD.goodSNPs. \
+--prodr2-chr baselineLD_v2.2/baselineLD.goodSNPs. \
 --out s1_sumstats/pcgc
 
 #view heritabiltiy estimates
