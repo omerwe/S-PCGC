@@ -12,9 +12,11 @@ S-PCGC is described in the following paper:
 <br>
 [Estimating SNP-Based Heritability and Genetic Correlation in Case-Control Studies Directly and with Summary Statistics. The American Journal of Human Genetics, 103(1) 89-99.](https://www.sciencedirect.com/science/article/pii/S0002929718301952). This paper however, doesn't include a description of functional enrichment estimation. We will post a bioRxiv preprint with details soon.
 
+##### Please note: We switched from Python 2.7 to Python 3 on April 25 2019! 
+
 <br><br>
 # Installation
-S-PCGC is designed for Python 2.7, and depends on the following freely available Python packages:
+S-PCGC is designed for Python 3, and depends on the following freely available Python packages:
 * [numpy](http://www.numpy.org/) and [scipy](http://www.scipy.org/)
 * [scikit-learn](http://scikit-learn.org/stable/)
 * [pandas](https://pandas.pydata.org/getpandas.html)
