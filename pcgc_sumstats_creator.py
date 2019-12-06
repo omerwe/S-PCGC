@@ -45,7 +45,9 @@ class PCGC_Sumstats:
             
         #read covariates
         if args.covar is not None:
-            df_covar = pd.read_table(args.covar, delim_whitespace=True)
+            df_covar = pd.read_table(args.covar, delim_whitespace=True, dtype=str)
+            for c in df_covar.columns[2:]:
+                df_covar[c] = df_covar[c].astype(np.float)
             df_covar = self.add_fid_iid_index(df_covar)
             
             #merge individuals across phenotypes and covariates
@@ -373,9 +375,8 @@ class PCGC_Sumstats:
         
     def read_pheno_file(self, args):        
         #read phenotypes from file
-        df_pheno = pd.read_table(args.pheno, delim_whitespace=True, usecols=[0,1,args.pheno_col+1])
-        df_pheno.iloc[:,0] = df_pheno.iloc[:,0].astype('str')
-        df_pheno.iloc[:,1] = df_pheno.iloc[:,1].astype('str')
+        df_pheno = pd.read_table(args.pheno, delim_whitespace=True, usecols=[0,1,args.pheno_col+1], dtype=str)
+        df_pheno.iloc[:,-1] = df_pheno.iloc[:,-1].astype(np.int)
         df_pheno = self.add_fid_iid_index(df_pheno)
 
         #apply --keep
