@@ -111,9 +111,14 @@ class PCGC_Sumstats:
                     if c not in df_covar.columns:
                         raise ValueError('%s is not in the covariates file'%(c))
                 self.C_regress = df_covar[covars_regress_cols].values
+                
+                if np.linalg.matrix_rank(self.C_regress) < self.C_regress.shape[1]:
+                    raise ValueError('Some of the covariates are linearly dependent on other covariates --- please double check your covariates input')
 
                 #compute the Cholesky factorization of the hat matrix
                 self.L_CTC = la.cho_factor(self.C_regress.T.dot(self.C_regress))
+                if np.any(np.isnan(self.L_CTC[1])):
+                    raise ValueError('Covariates matrix could not be factorized --- please check if your covariates are linearly dependent')
                 
         
         #load pve file if it exists
