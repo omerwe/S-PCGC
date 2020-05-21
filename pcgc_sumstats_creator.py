@@ -48,6 +48,8 @@ class PCGC_Sumstats:
             df_covar = pd.read_table(args.covar, delim_whitespace=True, dtype=str)
             for c in df_covar.columns[2:]:
                 df_covar[c] = df_covar[c].astype(np.float)
+                if np.any(df_covar[c].isnull()):
+                    raise ValueError('covariate %s includes missing values. Plesae impute them or remove individuals with missing covariates'%(c))
             df_covar = self.add_fid_iid_index(df_covar)
             
             #merge individuals across phenotypes and covariates
@@ -111,6 +113,8 @@ class PCGC_Sumstats:
                     if c not in df_covar.columns:
                         raise ValueError('%s is not in the covariates file'%(c))
                 self.C_regress = df_covar[covars_regress_cols].values
+                if np.any(np.isnan(self.C_regress)):
+                    raise ValueError('Covariates include missing values')
                 
                 if np.linalg.matrix_rank(self.C_regress) < self.C_regress.shape[1]:
                     raise ValueError('Some of the covariates are linearly dependent on other covariates --- please double check your covariates input')
