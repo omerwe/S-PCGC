@@ -19,7 +19,7 @@ def series_eq(x, y):
 
 
 def read_csv(fh, **kwargs):
-    return pd.read_csv(fh, delim_whitespace=True, na_values='.', **kwargs)
+    return pd.read_csv(fh, sep='\s+', na_values='.', **kwargs)
 
 
 def sub_chr(s, chr):
@@ -268,7 +268,7 @@ def __ID_List_Factory__(colnames, keepcol, fname_end, header=None, usecols=None)
 
             comp = get_compression(fname)
             self.df = pd.read_csv(fname, header=self.__header__, usecols=self.__usecols__,
-                                  delim_whitespace=True, compression=comp)
+                                  sep='\s+', compression=comp)
 
             if self.__colnames__:
                 self.df.columns = self.__colnames__

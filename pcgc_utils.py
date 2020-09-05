@@ -53,7 +53,7 @@ def load_dfs(file_prefix, file_prefix_chr, file_suffix, arg_name, flag_name, joi
         for fname in tqdm(flist, disable=(file_prefix is not None or (not use_tqdm))):
             if not os.path.exists(fname):
                 raise IOError('%s not found'%(fname))
-            df_chr = pd.read_table(fname, delim_whitespace=True, index_col=index_col, header=header, usecols=usecols)
+            df_chr = pd.read_table(fname, sep='\s+', index_col=index_col, header=header, usecols=usecols)
             if index_intersect is not None:
                 index_intersect_chr = df_chr.index.intersection(index_intersect)
                 if len(index_intersect_chr) == 0:

@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 
 def collect_annotations_chr_info(annot_file, df_frq=None, min_annot=None):
-    df_annot = pd.read_table(annot_file, delim_whitespace=True, index_col='SNP', usecols=(lambda c: c not in ['CHR', 'CM', 'BP']))
+    df_annot = pd.read_table(annot_file, sep='\s+', index_col='SNP', usecols=(lambda c: c not in ['CHR', 'CM', 'BP']))
     
     #compute sync df
     df_sync = pd.DataFrame(index=df_annot.columns)

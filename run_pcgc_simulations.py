@@ -60,7 +60,7 @@ def run_gcta(gcta_exe, plink_fname, prev):
     assert os.path.exists(plink_fname+'.hsq')
     
     #read gcta results
-    df_reml = pd.read_table(plink_fname+'.hsq', delim_whitespace=True, skiprows=[5,6], index_col='Source')
+    df_reml = pd.read_table(plink_fname+'.hsq', sep='\s+', skiprows=[5,6], index_col='Source')
     gcta_h2_est = df_reml.loc['V(G)/Vp_L', 'Variance']
     
     return gcta_h2_est
@@ -149,7 +149,7 @@ def pcgc(K_list, y1, y2, prev1, prev2, X1, X2, remove_diag=True):
     
 def create_chr_extract_file(plink_fname, chr_num):
     extract_fname = os.path.join(tempfile._get_default_tempdir(), next(tempfile._get_candidate_names()))
-    df_bim = pd.read_table(plink_fname+'.bim', delim_whitespace=True, usecols=[0,1])
+    df_bim = pd.read_table(plink_fname+'.bim', sep='\s+', usecols=[0,1])
     df_bim.columns = ['CHR', 'SNP']
     df_bim = df_bim.query('CHR==%d'%(chr_num))
     assert df_bim.shape[0] > 0
@@ -176,7 +176,7 @@ def run_plink_linreg(plink_exe, plink_fname, out_fname, n, chr_num=None):
     assert os.path.exists(out_fname+'.qassoc')
     
     #add some required fields and save to the correct file name
-    df_linreg = pd.read_table(out_fname+'.qassoc', delim_whitespace=True)
+    df_linreg = pd.read_table(out_fname+'.qassoc', sep='\s+')
     df_linreg['N'] = n
     df_linreg['Z'] = stats.norm(0,1).isf(df_linreg['P'] / 2.0) * np.sign(df_linreg['BETA'])
     df_linreg['A0'] = 2

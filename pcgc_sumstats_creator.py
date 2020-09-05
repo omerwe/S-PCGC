@@ -45,7 +45,7 @@ class PCGC_Sumstats:
             
         #read covariates
         if args.covar is not None:
-            df_covar = pd.read_table(args.covar, delim_whitespace=True, dtype=str)
+            df_covar = pd.read_table(args.covar, sep='\s+', dtype=str)
             for c in df_covar.columns[2:]:
                 df_covar[c] = df_covar[c].astype(np.float)
                 if np.any(df_covar[c].isnull()):
@@ -384,13 +384,13 @@ class PCGC_Sumstats:
         
     def read_pheno_file(self, args):        
         #read phenotypes from file
-        df_pheno = pd.read_table(args.pheno, delim_whitespace=True, usecols=[0,1,args.pheno_col+1], dtype=str)
+        df_pheno = pd.read_table(args.pheno, sep='\s+', usecols=[0,1,args.pheno_col+1], dtype=str)
         df_pheno.iloc[:,-1] = df_pheno.iloc[:,-1].astype(np.int)
         df_pheno = self.add_fid_iid_index(df_pheno)
 
         #apply --keep
         if args.keep is not None:
-            df_keep = pd.read_table(args.keep, delim_whitespace=True, header=None, usecols=[0,1])            
+            df_keep = pd.read_table(args.keep, sep='\s+', header=None, usecols=[0,1])            
             df_keep = self.add_fid_iid_index(df_keep)
             df_pheno = df_pheno.merge(df_keep.iloc[:,:0], how='inner', left_index=True, right_index=True)
             if df_pheno.shape[0]==0:
@@ -399,7 +399,7 @@ class PCGC_Sumstats:
          
         #apply --remove
         if args.remove is not None:
-            df_remove = pd.read_table(args.remove, delim_whitespace=True, header=None, usecols=[0,1])
+            df_remove = pd.read_table(args.remove, sep='\s+', header=None, usecols=[0,1])
             df_remove.columns = ['fid', 'iid']
             df_remove = self.add_fid_iid_index(df_remove)            
             df_pheno = df_pheno.loc[~df_pheno.index.isin(df_remove.index)]
@@ -439,7 +439,7 @@ class PCGC_Sumstats:
         
         #apply --extract
         if args.extract is not None:
-            df_extract = pd.read_table(args.extract, delim_whitespace=True, header=None, usecols=[0])
+            df_extract = pd.read_table(args.extract, sep='\s+', header=None, usecols=[0])
             is_good_snp = df_bim['snp'].isin(df_extract.iloc[:,0])
             if not np.all(is_good_snp):
                 df_bim = df_bim.loc[is_good_snp]
@@ -450,7 +450,7 @@ class PCGC_Sumstats:
         
         #apply --exclude
         if args.exclude is not None:
-            df_exclude = pd.read_table(args.exclude, delim_whitespace=True, header=None, usecols=[0])
+            df_exclude = pd.read_table(args.exclude, sep='\s+', header=None, usecols=[0])
             is_good_snp = ~(df_bim['snp'].isin(df_exclude.iloc[:,0]))
             if not np.all(is_good_snp):
                 df_bim = df_bim.loc[is_good_snp]

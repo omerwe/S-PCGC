@@ -458,7 +458,7 @@ class SPCGC:
                 raise ValueError('--sync not provided')
             df_sync = pd.read_table(args.sync+'sync', index_col='Category')
             overlap_suffix = 'overlap' if args.not_M_5_50 else 'overlap_5_50'
-            df_overlap = pd.read_table(args.sync+overlap_suffix, delim_whitespace=True, index_col='Category')
+            df_overlap = pd.read_table(args.sync+overlap_suffix, sep='\s+', index_col='Category')
             if df_sync.shape[0] != df_prodr2.shape[1] or not np.all(df_sync.index == df_prodr2.columns):
                 raise ValueError('sync and prodr2 files must have the same annotations')
             if df_overlap.shape[0] != df_prodr2.shape[1] or not np.all(df_overlap.index == df_prodr2.columns):
