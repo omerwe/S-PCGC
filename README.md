@@ -267,10 +267,14 @@ Q: Can S-PCGC estimate heritability directly from raw genotypes, without using s
 A: No. In our experience using summary statistics is preferable, because it allows extremely fast performance at a negligible loss of accuracy. However, if you want an exact PCGC implementation, we recommend trying out [LDAK](http://dougspeed.com/pcgc-regression/). Note that the LDAK implementation is limited to less than 100,000 individuals and 20 annotations.
 
 Q: Can I include LDAK weights?<br>
-A: Yes - you can just include them as an S-LDSC annotation. If you want to combine these weights with S-LDSC annotations, we recommend creating joint annotations as described in [Gazal et al. 2018 bioRxiv](https://www.biorxiv.org/content/early/2018/01/30/256412).
+A: Yes - you can just include them as an S-LDSC annotation. If you want to combine these weights with S-LDSC annotations, we recommend creating joint annotations as described in [Gazal et al. 2019 Nature Genetics](https://www.nature.com/articles/s41588-019-0464-1).
 
 Q: Can S-PCGC fit an intercept like LDSC?<br>
 A: No. There's no need to estimate an intercept when the summary statistics are created with `pcgc_sumstats_creator.py`, because the intercept is already known.
+
+Q: My plink files use different rsids than the ones in your annotation files. Can you  match SNPs based on genetic position and alleles instead of rsid?<br>
+A: Unfortunatley no, because the annotation files are compatible with LDSC annotation files, which do not include allelic information (see explanation below). We recommend that you create new plink files and annotation files to enforce a consistent variant naming scheme (e.g. CHR.BP.A1.A2).
+**Explanation**: S-PCGC cannot match variants based on only genetic position (without allelic info) because there might be several (multi-allelic) variants in the same chromosome+position, and S-PCGC will not be able to distinguish between them.
 
 <br><br>
 -----------------
