@@ -53,7 +53,7 @@ class SPCGC_Data:
     def read_Gty_files(self, args, sumstats_prefix, sumstats_prefix_chr, category_names, N, mean_Q):
     
         #read otherstats files
-        df_otherstats_list = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, 'otherstats', 'otherstats', 'otherstats', join_axis=None, use_tqdm=False)
+        df_otherstats_list = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, 'otherstats', 'otherstats', 'otherstats', join_axis=None, use_tqdm=False, allow_duplicates=True)
 
         #sum M2 (sum of squares of annotations) of each annotation
         M_annot_sumstats2 = np.zeros(len(category_names))
@@ -74,7 +74,7 @@ class SPCGC_Data:
         if args.no_Gty:                    
             df_Gty = self.create_synthetic_Gty(N, mean_Q, category_names)
         else:
-            df_Gty = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, 'Gty.gz', 'Gty', 'Gty', join_axis=0, index_col=['fid', 'iid'],use_tqdm=False)
+            df_Gty = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, 'Gty.gz', 'Gty', 'Gty', join_axis=0, index_col=['fid', 'iid'], use_tqdm=False, allow_duplicates=True)
             df_Gty = np.sqrt((df_Gty**2).groupby(['fid', 'iid']).sum())
             
             #synchronize df_Gty columns to match category_names
@@ -112,11 +112,11 @@ class SPCGC_Data:
         #load summary statistics
         if args.he:        
             try:
-                df_sumstats = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, '', 'sumstats', 'sumstats', index_col='SNP')
+                df_sumstats = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, '', 'sumstats', 'sumstats', index_col='SNP', allow_duplicates=True)
             except IOError:            
-                df_sumstats = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, 'sumstats.gz', 'sumstats', 'sumstats', index_col='SNP')
+                df_sumstats = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, 'sumstats.gz', 'sumstats', 'sumstats', index_col='SNP', allow_duplicates=True)
         else:
-            df_sumstats = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, 'sumstats.gz', 'sumstats', 'sumstats', index_col='SNP')
+            df_sumstats = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, 'sumstats.gz', 'sumstats', 'sumstats', index_col='SNP', allow_duplicates=True)
         
         #transform Z column if it wasn't created especially for PCGC
         if args.he:
@@ -134,7 +134,7 @@ class SPCGC_Data:
             N = df_sumstats['N'].mean()
         #load PCGC other stats files
         else:            
-            df_otherstats_list = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, 'otherstats', 'otherstats', 'otherstats', join_axis=None, use_tqdm=False)
+            df_otherstats_list = pcgc_utils.load_dfs(sumstats_prefix, sumstats_prefix_chr, 'otherstats', 'otherstats', 'otherstats', join_axis=None, use_tqdm=False, allow_duplicates=True)
             df_otherstats = df_otherstats_list[0]
             var_t = df_otherstats.query('Property == "var_t"')['Value'].values[0]
             pve = df_otherstats.loc[df_otherstats['Property'].str.startswith('pve'), 'Value'].values
@@ -219,21 +219,37 @@ class SPCGC_Data:
 
 class SPCGC_RG:
     def __init__(self, obj_h2_1, obj_h2_2, obj_cov, M_annot, category_names):
-        
+
+        #handle negative h2 entries
+        assert len(category_names) == obj_h2_1.cat.shape[0]
+        assert len(category_names) == obj_h2_2.cat.shape[0]
+        for cat_name, obj_h2_1_c, obj_h2_2_c in zip(category_names, obj_h2_1.cat, obj_h2_2.cat):
+            if obj_h2_1_c<0 or obj_h2_2_c<0:
+                logging.warning('Cannot compute rg for %s because of negative h2 estimates'%(cat_name))
+
         #compute overall genetic correlation and its stderr
-        rg = obj_cov.tot / np.sqrt(obj_h2_1.tot * obj_h2_2.tot)
+        if obj_h2_1.tot>=0 and obj_h2_2.tot>=0:
+            rg = obj_cov.tot / np.sqrt(obj_h2_1.tot * obj_h2_2.tot)
+        else:
+            rg = np.nan
         tot_jk_1 = obj_h2_1.delete_values.dot(M_annot)
         tot_jk_2 = obj_h2_2.delete_values.dot(M_annot)
         tot_jk_cov = obj_cov.delete_values.dot(M_annot)
-        rg_jk = tot_jk_cov / np.sqrt(tot_jk_1*tot_jk_2)
+        i = (tot_jk_1>=0) & (tot_jk_2>=0)
+        rg_jk = np.zeros(tot_jk_1.shape) + np.nan
+        rg_jk[i] = tot_jk_cov[i] / np.sqrt(tot_jk_1[i]*tot_jk_2[i])
         rg_var = np.var(rg_jk, ddof=0) * len(obj_cov.delete_values-1)
         
         #compute per-annotation genetic correlation
-        rg_annot = obj_cov.cat / np.sqrt(obj_h2_1.cat * obj_h2_2.cat)
+        i = (obj_h2_1.cat>=0) & (obj_h2_2.cat>=0)
+        rg_annot = np.zeros(obj_h2_1.cat.shape) + np.nan
+        rg_annot[i] = obj_cov.cat[i] / np.sqrt(obj_h2_1.cat[i] * obj_h2_2.cat[i])
         cat_annot_jk_1 = obj_h2_1.delete_values * M_annot
         cat_annot_jk_2 = obj_h2_2.delete_values * M_annot
         cat_annot_jk_cov = obj_cov.delete_values * M_annot
-        rg_annot_jk = cat_annot_jk_cov / np.sqrt(cat_annot_jk_1*cat_annot_jk_2)
+        i = (cat_annot_jk_1>=0) & (cat_annot_jk_2>=0)
+        rg_annot_jk = np.zeros(cat_annot_jk_1.shape) + np.nan
+        rg_annot_jk[i] = cat_annot_jk_cov[i] / np.sqrt(cat_annot_jk_1[i]*cat_annot_jk_2[i])
         rg_annot_cov = np.cov(rg_annot_jk.T, ddof=0) * len(obj_cov.delete_values-1)
         if rg_annot_jk.shape[1] == 1: rg_annot_cov = np.array([[rg_annot_cov]])
         rg_annot_se = np.sqrt(np.diag(rg_annot_cov))
@@ -482,6 +498,7 @@ class SPCGC:
                 
             #make sure that all the dfs are perfectly aligned
             for df in df_list:
+                assert not df.index.duplicated().any()
                 index_intersect_df = index_intersect.intersection(df.index)
                 if len(index_intersect_df) < len(index_intersect):
                     raise ValueError('not all SNPs found in the annotation or LD score files - this shouldn''t happen')
@@ -573,6 +590,7 @@ class SPCGC:
                     fname1, fname2 = sumstats_prefix_list[0], sumstats_prefix_list[obj_i]
                     logging.warning('Flipping %d SNPs in %s to match the minor alleles of %s'%(is_flipped.sum(), fname1, fname2))
 
+        assert not index_intersect.duplicated().any()
         return index_intersect
         
         
@@ -660,13 +678,13 @@ class SPCGC:
         index_list = []
     
         if args.annot is not None or args.annot_chr is not None:
-            df_annot_index = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'annot.gz', 'annot', 'annot', index_col='SNP', usecols=['SNP'])
+            df_annot_index = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'annot.gz', 'annot', 'annot', index_col='SNP', usecols=['SNP'], allow_duplicates=True)
             index_list.append(df_annot_index.index)
         if args.fit_intercept:
-            df_l2_index = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'l2.ldscore.gz', 'l2.ldscore', 'annot', index_col='SNP', usecols=['SNP'])
+            df_l2_index = pcgc_utils.load_dfs(args.annot, args.annot_chr, 'l2.ldscore.gz', 'l2.ldscore', 'annot', index_col='SNP', usecols=['SNP'], allow_duplicates=True)
             index_list.append(df_l2_index.index)
         if args.w_ld is not None or args.w_ld_chr is not None:
-            df_w_ld_index = pcgc_utils.load_dfs(args.w_ld, args.w_ld_chr, 'l2.ldscore.gz', 'l2.ldscore', 'w-ld', index_col='SNP', usecols=['SNP'])
+            df_w_ld_index = pcgc_utils.load_dfs(args.w_ld, args.w_ld_chr, 'l2.ldscore.gz', 'l2.ldscore', 'w-ld', index_col='SNP', usecols=['SNP'], allow_duplicates=True)
             index_list.append(df_w_ld_index.index)
             
         if len(index_list) == 0:
@@ -676,6 +694,7 @@ class SPCGC:
         else:
             index_intersect = reduce(lambda i1,i2: i1.intersection(i2), index_list)
             
+        assert not index_intersect.duplicated().any()
         return index_intersect
             
 

@@ -22,7 +22,7 @@ def configure_logger(out_prefix):
     logger.addHandler(fileHandler)
 
 
-def load_dfs(file_prefix, file_prefix_chr, file_suffix, arg_name, flag_name, join_axis=0, index_col=None, header='infer', use_tqdm=True, usecols=None, index_intersect=None):
+def load_dfs(file_prefix, file_prefix_chr, file_suffix, arg_name, flag_name, join_axis=0, index_col=None, header='infer', use_tqdm=True, usecols=None, index_intersect=None, allow_duplicates=False):
 
     if index_col is None and index_intersect is not None:
         raise ValueError('cannot use index_intersect without index_col')
@@ -54,6 +54,20 @@ def load_dfs(file_prefix, file_prefix_chr, file_suffix, arg_name, flag_name, joi
             if not os.path.exists(fname):
                 raise IOError('%s not found'%(fname))
             df_chr = pd.read_table(fname, sep='\s+', index_col=index_col, header=header, usecols=usecols)
+            
+            #remove duplicate indices
+            if index_col is not None and np.any(df_chr.index.duplicated()):
+                num_dups = df_chr.index.duplicated().sum()
+                
+                if not allow_duplicates:
+                    raise ValueError('%d duplicate entries found in file: %s'%(num_dups, fname))
+                else:
+                    warning_mgs = 'Found %d duplicate names in file: %s. I will keep only the first one of each set of duplicates'%(num_dups, fname) \
+                                + ' (in case of error, please modify your input files to prevent duplicate SNPs)'
+                    logging.warning(warning_mgs)
+                    df_chr = df_chr.loc[~df_chr.index.duplicated(keep='first')]
+            
+            
             if index_intersect is not None:
                 index_intersect_chr = df_chr.index.intersection(index_intersect)
                 if len(index_intersect_chr) == 0:
