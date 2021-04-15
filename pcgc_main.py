@@ -694,7 +694,8 @@ class SPCGC:
         else:
             index_intersect = reduce(lambda i1,i2: i1.intersection(i2), index_list)
             
-        assert not index_intersect.duplicated().any()
+        if index_intersect is not None:
+            assert not index_intersect.duplicated().any()
         return index_intersect
             
 
