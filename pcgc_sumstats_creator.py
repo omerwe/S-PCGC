@@ -454,7 +454,7 @@ class PCGC_Sumstats:
             is_good_snp = ~(df_bim['snp'].isin(df_exclude.iloc[:,0]))
             if not np.all(is_good_snp):
                 df_bim = df_bim.loc[is_good_snp]
-                bed = bed[:, is_good_snp.values]                
+                bed = bed[:, is_good_snp.values]
             if df_bim.shape[0]==0:
                 raise ValueError('no SNPs remained after applying --exclude!')
             logging.info('%d SNPs remained after applying --exclude'%(df_bim.shape[0]))
@@ -487,8 +487,9 @@ class PCGC_Sumstats:
             is_consistent_snp = is_consistent_snp | (df_maf[allele1_col] == df_bim['a0']) & (df_maf[allele0_col] == df_bim['a1'])
             if not np.all(is_consistent_snp):
                 logging.info('%d SNPs will be removed because they have different alleles in plink and MAF files'%(np.sum(~is_consistent_snp)))
-                df_maf = df_maf.loc[is_consistent_snp]
-                df_bim = df_bim.loc[is_consistent_snp]
+                df_maf = df_maf.loc[is_consistent_snp].copy()
+                df_bim = df_bim.loc[is_consistent_snp].copy()
+                bed = bed[:, is_consistent_snp.values]
 
             #flip MAFs of flipped appeles
             is_flipped = ((df_maf[allele1_col] == df_bim['a0']) & (df_maf[allele0_col] == df_bim['a1'])).values
