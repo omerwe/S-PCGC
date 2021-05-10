@@ -523,6 +523,8 @@ class PCGC_Sumstats:
             if df_pheno.shape[0]==0:
                 raise ValueError('no individuals found in both the plink and phenotype files!')            
             logging.info('%d individuals have both genotypes and phenotypes'%(df_pheno.shape[0]))
+        assert np.all(df_fam.index.isin(df_pheno.index))
+        df_pheno = df_pheno.loc[df_fam.index]
                             
         #check that everything is consistent
         if df_bim.shape[0] < 10:
