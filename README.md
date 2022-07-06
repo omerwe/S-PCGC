@@ -275,12 +275,3 @@ A: No. There's no need to estimate an intercept when the summary statistics are 
 Q: My plink files use different rsids than the ones in your annotation files. Can you  match SNPs based on genetic position and alleles instead of rsid?<br>
 A: Unfortunatley no, because the annotation files are compatible with LDSC annotation files, which do not include allelic information (see explanation below). We recommend that you create new plink files and annotation files to enforce a consistent variant naming scheme (e.g. CHR.BP.A1.A2).
 **Explanation**: S-PCGC cannot match variants based on only genetic position (without allelic info) because there might be several (multi-allelic) variants in the same chromosome+position, and S-PCGC will not be able to distinguish between them.
-
-<br><br>
------------------
-Contact
----------
-For questions and comments, please contact Omer Weissbrod at oweissbrod[at]hsph.harvard.edu
-
-
-
