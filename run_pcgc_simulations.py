@@ -344,11 +344,11 @@ def pcgc_direct_all(studies_obj, annotations, use_PCs):
     num_anno = annotations.shape[1]
     
     #Prepare quantities for correction of annotations with negative numbers
-    M = annotations.sum(axis=0).astype(np.float)
+    M = annotations.sum(axis=0).astype(float)
     min_annot = np.min(annotations, axis=0); min_annot[min_annot>0]=0
     
     #create all GRMs
-    K_arr = np.empty((num_anno, num_studies, num_studies), dtype=np.object)
+    K_arr = np.empty((num_anno, num_studies, num_studies), dtype=object)
     for anno_i in range(num_anno):
         w = annotations[:,anno_i] - min_annot[anno_i]; assert np.all(w >= 0)
         for study_i in range(num_studies):
@@ -431,16 +431,16 @@ def simulate_studies(num_snps, h2_arr, prev_arr, n_arr, anno_freq, rg=0.5, rg_ma
     
     #Replace Nones with default values
     if c_arr is None:
-        c_arr = np.zeros(num_studies, dtype=np.int)        
+        c_arr = np.zeros(num_studies, dtype=int)        
     if h2_c_arr is None:
         h2_c_arr = np.ones(num_studies) * 0.25
     if num_pcs_arr is None:
-        num_pcs_arr = np.zeros(num_studies, dtype=np.int)        
+        num_pcs_arr = np.zeros(num_studies, dtype=int)        
     
     #generate annotations
     anno_freq = [1,0.5]#,0.25,0.25]     #the number of SNPs in each annotations
     assert anno_freq[0]==1    
-    annotations = (np.random.random(size=(m,num_anno))<=anno_freq).astype(np.float)
+    annotations = (np.random.random(size=(m,num_anno))<=anno_freq).astype(float)
     #annotations[:,1] = np.ones(m); annotations[m/2:, 1] = -1
     #annotations[:,1] = np.random.randn(m)
     assert np.all(annotations[:,0] == 1)

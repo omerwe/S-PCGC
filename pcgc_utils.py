@@ -113,7 +113,7 @@ def find_df_column(df, strings_to_find):
     if isinstance(strings_to_find, str):
         strings_to_find = [strings_to_find]
         
-    is_relevant_col = np.zeros(df.shape[1], dtype=np.bool)
+    is_relevant_col = np.zeros(df.shape[1], dtype=bool)
     for str_to_find in strings_to_find:
         is_relevant_col = is_relevant_col | (df.columns.str.upper() == str_to_find.upper())
     if np.sum(is_relevant_col)==0:

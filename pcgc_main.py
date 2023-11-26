@@ -410,7 +410,7 @@ class SPCGC:
             self.load_annotations_data(args, df_prodr2, index_intersect)
                                 
         #compute h2 and gencov of each pair of studies
-        gencov_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=np.object)
+        gencov_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=object)
         for i in range(len(pcgc_data_list)):
             oi = pcgc_data_list[i]
             for j in range(i+1):
@@ -423,7 +423,7 @@ class SPCGC:
                                
                                
         #compute rg
-        rg_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=np.object)
+        rg_arr = np.empty((len(pcgc_data_list), len(pcgc_data_list)), dtype=object)
         for i in range(len(pcgc_data_list)):
             for j in range(i+1):
                 rg_arr[i,j] = SPCGC_RG(gencov_arr[i,i], gencov_arr[j,j], gencov_arr[i,j], M_annot, df_prodr2.columns)
@@ -615,7 +615,7 @@ class SPCGC:
             
         #write rg results to file
         if len(fname_list) > 1:
-            rg_arr_for_df = np.empty((len(fname_list), len(fname_list)), dtype=np.object)
+            rg_arr_for_df = np.empty((len(fname_list), len(fname_list)), dtype=object)
             for i in range(len(fname_list)):
                 for j in range(i+1):
                     rg_arr_for_df[i,j] = '%0.4f (%0.4f)'%(self.rg_arr[i,j].rg, self.rg_arr[i,j].rg_se)

@@ -47,7 +47,7 @@ class PCGC_Sumstats:
         if args.covar is not None:
             df_covar = pd.read_table(args.covar, sep='\s+', dtype=str)
             for c in df_covar.columns[2:]:
-                df_covar[c] = df_covar[c].astype(np.float)
+                df_covar[c] = df_covar[c].astype(float)
                 if np.any(df_covar[c].isnull()):
                     raise ValueError('covariate %s includes missing values. Plesae impute them or remove individuals with missing covariates'%(c))
             df_covar = self.add_fid_iid_index(df_covar)
@@ -150,7 +150,7 @@ class PCGC_Sumstats:
             raise ValueError('only one phenotype value found!')
         elif num_pheno > 2:
             raise ValueError('phenotype file must include only cases and controls')
-        y = (y>y.mean()).astype(np.int).values
+        y = (y>y.mean()).astype(int).values
         
         #compute PCGC statistics
         P = y.mean()        
@@ -294,7 +294,7 @@ class PCGC_Sumstats:
         
         #read SNPs from bfile/bgen file
         if self.genetic_format == 'plink':            
-            X = self.bfile['bed'][:, snp1:snp2].compute().astype(np.float)
+            X = self.bfile['bed'][:, snp1:snp2].compute().astype(float)
         elif self.genetic_format == 'bgen':
             raise NotImplementedError('bgen functionality not yet implemented')
         else:
@@ -302,7 +302,7 @@ class PCGC_Sumstats:
             
         #normalize SNPs (the loop is faster than vector computations, believe it or not)
         n = X.shape[0]
-        self.n = np.zeros(X.shape[1], dtype=np.int)
+        self.n = np.zeros(X.shape[1], dtype=int)
         for j in range(0, X.shape[1]):
             newsnp = X[:, j]
             is_miss = np.isnan(newsnp)
@@ -370,7 +370,7 @@ class PCGC_Sumstats:
         if isinstance(strings_to_find, str):
             strings_to_find = [strings_to_find]
             
-        is_relevant_col = np.zeros(df.shape[1], dtype=np.bool)
+        is_relevant_col = np.zeros(df.shape[1], dtype=bool)
         for str_to_find in strings_to_find:
             is_relevant_col = is_relevant_col | (df.columns.str.upper() == str_to_find.upper())
         if np.sum(is_relevant_col)==0:
@@ -385,7 +385,7 @@ class PCGC_Sumstats:
     def read_pheno_file(self, args):        
         #read phenotypes from file
         df_pheno = pd.read_table(args.pheno, sep='\s+', usecols=[0,1,args.pheno_col+1], dtype=str)
-        df_pheno.iloc[:,-1] = df_pheno.iloc[:,-1].astype(np.int)
+        df_pheno.iloc[:,-1] = df_pheno.iloc[:,-1].astype(int)
         df_pheno = self.add_fid_iid_index(df_pheno)
 
         #apply --keep
@@ -414,7 +414,7 @@ class PCGC_Sumstats:
         if np.any(is_bad_pheno):
             logging.warning('Removing %d individuals with non-numeric phenotypes'%(is_bad_pheno.sum()))
             df_pheno = df_pheno.loc[~is_bad_pheno]
-            df_pheno.iloc[:,-1] = df_pheno.iloc[:,-1].astype(np.float)
+            df_pheno.iloc[:,-1] = df_pheno.iloc[:,-1].astype(float)
         
         #verify that we have only cases and controls
         num_pheno = len(np.unique(df_pheno.iloc[:,-1]))
@@ -483,8 +483,9 @@ class PCGC_Sumstats:
                 allele1_col = self.find_df_column(df_maf, ['ALLELE1', 'A1'], 'MAF')
             df_maf[allele0_col] = df_maf[allele0_col].astype('str')
             df_maf[allele1_col] = df_maf[allele1_col].astype('str')
-            is_consistent_snp = (df_maf[allele1_col] == df_bim['a1']) & (df_maf[allele0_col] == df_bim['a0'])
-            is_consistent_snp = is_consistent_snp | (df_maf[allele1_col] == df_bim['a0']) & (df_maf[allele0_col] == df_bim['a1'])
+            assert np.all(df_maf[allele1_col].index == df_bim['a1'].index)
+            is_consistent_snp = (df_maf[allele1_col] == df_bim['a1'].values) & (df_maf[allele0_col] == df_bim['a0'].values)
+            is_consistent_snp = is_consistent_snp | (df_maf[allele1_col] == df_bim['a0'].values) & (df_maf[allele0_col] == df_bim['a1'].values)
             if not np.all(is_consistent_snp):
                 logging.info('%d SNPs will be removed because they have different alleles in plink and MAF files'%(np.sum(~is_consistent_snp)))
                 df_maf = df_maf.loc[is_consistent_snp].copy()
@@ -492,7 +493,7 @@ class PCGC_Sumstats:
                 bed = bed[:, is_consistent_snp.values]
 
             #flip MAFs of flipped appeles
-            is_flipped = ((df_maf[allele1_col] == df_bim['a0']) & (df_maf[allele0_col] == df_bim['a1'])).values
+            is_flipped = ((df_maf[allele1_col] == df_bim['a0'].values) & (df_maf[allele0_col] == df_bim['a1'].values)).values
             maf_col = self.find_df_column(df_maf, ['MAF', 'FRQ', 'FREQ', 'A1Freq'], 'MAF')
             if np.any(is_flipped):
                 new_mafs = df_maf[maf_col].values

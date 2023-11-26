@@ -22,8 +22,8 @@ class CC_Study:
         #generate SNPs and liabilities for an entire population
         m = len(mafs)
         num_gen = np.maximum(int(float(n) / float(prev)), 25000)        
-        Z_snps =  (np.random.random(size=(num_gen, m)) < mafs).astype(np.int)
-        Z_snps += (np.random.random(size=(num_gen, m)) < mafs).astype(np.int)        
+        Z_snps =  (np.random.random(size=(num_gen, m)) < mafs).astype(int)
+        Z_snps += (np.random.random(size=(num_gen, m)) < mafs).astype(int)        
         if Z_shared_con is not None:
             Z_snps = np.concatenate((Z_shared_con, Z_snps), axis=0)
             num_gen = Z_snps.shape[0]
@@ -46,7 +46,7 @@ class CC_Study:
 
         #define the phenotype y
         if use_liab: y = liab            
-        else: y = cases.astype(np.int)
+        else: y = cases.astype(int)
         
         #generate random string for study name
         random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
@@ -63,7 +63,7 @@ class CC_Study:
         #select controls        
         num_controls = int(int(n*(1-frac_cases)))
         if Z_shared_con is None:
-            control_inds1 = np.zeros(0, dtype=np.int)
+            control_inds1 = np.zeros(0, dtype=int)
             num_shared = 0
         else:
             num_shared = Z_shared_con.shape[0]
@@ -164,7 +164,7 @@ class CC_Study:
         #Create a df of phased SNPs
         assert list(np.unique(self.Z_snps)) == [0,1,2]
         n, m = self.Z_snps.shape[0], self.Z_snps.shape[1]
-        Z_haploid = np.empty((self.Z_snps.shape[0], 2*m), dtype=np.int)
+        Z_haploid = np.empty((self.Z_snps.shape[0], 2*m), dtype=int)
         is_mat_first = np.random.random(size=(n,m)) < 0.5
         Z_p = np.zeros((n,m))
         Z_m = np.zeros((n,m))
@@ -217,10 +217,10 @@ class CC_Studies:
         if frac_cases_arr is None:
            frac_cases_arr = np.array([0.5] * num_studies)
         if use_liab_arr is None:
-            use_liab_arr = np.zeros(num_studies, dtype=np.bool)
+            use_liab_arr = np.zeros(num_studies, dtype=bool)
 
         #create chromosome numbers
-        chr_arr = np.ones(m, dtype=np.int)
+        chr_arr = np.ones(m, dtype=int)
         bin_size = (m / 2) / 21
         bin_i = m / 2
         for chr_num in range(2,23):
@@ -284,8 +284,8 @@ class CC_Studies:
         if self.num_shared_con==0:
             Z_shared_con = None
         else:
-            Z_shared_con =  (np.random.random(size=(self.num_shared_con, self.m)) < mafs).astype(np.float)
-            Z_shared_con += (np.random.random(size=(self.num_shared_con, self.m)) < mafs).astype(np.float)                    
+            Z_shared_con =  (np.random.random(size=(self.num_shared_con, self.m)) < mafs).astype(float)
+            Z_shared_con += (np.random.random(size=(self.num_shared_con, self.m)) < mafs).astype(float)                    
         
         #create studies
         studies_arr = []

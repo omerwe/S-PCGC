@@ -34,7 +34,7 @@ def compute_r2_prod(args):
         df_annotations -= min_annot
         
     #mark which SNPs to keep
-    is_good_snp = np.ones(len(snpnames), dtype=np.bool)
+    is_good_snp = np.ones(len(snpnames), dtype=bool)
     if args.exclude is not None:
         df_exclude = pd.read_table(args.exclude, squeeze=True, header=None)
         is_good_snp = is_good_snp & (~snpnames.isin(df_exclude))
@@ -51,7 +51,7 @@ def compute_r2_prod(args):
         is_r2_snp = is_good_snp
     else:
         keep_snps = np.where(is_good_snp)[0]
-        is_r2_snp = np.ones(len(keep_snps), dtype=np.bool)
+        is_r2_snp = np.ones(len(keep_snps), dtype=bool)
         snpnames = snpnames.iloc[keep_snps]
     
     #keep only annotations of SNPs in plink file

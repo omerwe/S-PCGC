@@ -28,7 +28,7 @@ def test_sumstats(tmpdir):
     output_prefix = os.path.join(str(tmpdir), 'results')
     
     # #override temp dir (for testing purposes only)
-    # tmpdir = '/tmp/w9Q2Im'
+    # tmpdir = '/tmp/drtq130w'
     # output_prefix = os.path.join(str(tmpdir), 'results')
     
     print('temporary directory: %s'%(tmpdir))
@@ -80,10 +80,10 @@ def test_sumstats(tmpdir):
     df_rg_gold.index = np.arange(len(df_rg_gold.index))
     df_rg_test.index = np.arange(len(df_rg_gold.index))
     for c in df_rg_gold.columns:
-        df_rg_gold[c] = df_rg_gold[c].str.replace(r"\(.*\)","")
-        df_rg_test[c] = df_rg_test[c].str.replace(r"\(.*\)","")
-    df_rg_gold = df_rg_gold.astype(np.float)
-    df_rg_test = df_rg_test.astype(np.float)
+        df_rg_gold[c] = df_rg_gold[c].str.replace(r"\(.*\)", '', regex=True)
+        df_rg_test[c] = df_rg_test[c].str.replace(r"\(.*\)", '', regex=True)
+    df_rg_gold = df_rg_gold.astype(float)
+    df_rg_test = df_rg_test.astype(float)
     assert np.allclose(df_rg_gold, df_rg_test)
     
     #check enrichment
